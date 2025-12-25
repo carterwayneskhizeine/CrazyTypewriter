@@ -376,6 +376,249 @@
         background-color: #001a00;
         font-weight: bold;
       }
+
+      /* ========== VS CODE THEME STYLES ========== */
+
+      /* VS Code Cursor - Modern thin line cursor */
+      .vscode-cursor {
+        caret-color: #d4d4d4;
+        width: 2px;
+      }
+
+      .vscode-cursor::selection {
+        background-color: #007acc;
+        color: #ffffff;
+      }
+
+      /* VS Code Box Border - Modern rounded with subtle shadow */
+      .vscode-box {
+        border: 1px solid #3c3c3c;
+        border-radius: 6px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      }
+
+      /* VS Code Button Style - Modern rounded with hover effects */
+      .vscode-btn {
+        background: transparent;
+        border: 1px solid transparent;
+        color: #858585;
+        border-radius: 4px;
+        transition: all 0.2s ease;
+      }
+
+      .vscode-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #d4d4d4;
+      }
+
+      .vscode-btn:active {
+        background: rgba(255, 255, 255, 0.15);
+        transform: scale(0.98);
+      }
+
+      /* VS Code Range Input - Modern slider */
+      .vscode-range {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 4px;
+        background: #3c3c3c;
+        outline: none;
+        border-radius: 2px;
+      }
+
+      .vscode-range::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 14px;
+        height: 14px;
+        background: #007acc;
+        cursor: pointer;
+        border-radius: 50%;
+        border: 2px solid #3c3c3c;
+        transition: all 0.2s ease;
+      }
+
+      .vscode-range::-webkit-slider-thumb:hover {
+        background: #1a9fff;
+        transform: scale(1.1);
+      }
+
+      .vscode-range::-moz-range-thumb {
+        width: 14px;
+        height: 14px;
+        background: #007acc;
+        cursor: pointer;
+        border-radius: 50%;
+        border: 2px solid #3c3c3c;
+        transition: all 0.2s ease;
+      }
+
+      .vscode-range::-moz-range-thumb:hover {
+        background: #1a9fff;
+        transform: scale(1.1);
+      }
+
+      /* VS Code Scrollbar - Modern and subtle */
+      .vscode-scrollbar::-webkit-scrollbar {
+        width: 10px;
+        height: 10px;
+      }
+
+      .vscode-scrollbar::-webkit-scrollbar-track {
+        background: transparent;
+      }
+
+      .vscode-scrollbar::-webkit-scrollbar-thumb {
+        background: #424242;
+        border-radius: 5px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+      }
+
+      .vscode-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #555555;
+        border-radius: 5px;
+        border: 2px solid transparent;
+        background-clip: content-box;
+      }
+
+      .vscode-scrollbar::-webkit-scrollbar-corner {
+        background: transparent;
+      }
+
+      .vscode-scrollbar {
+        scrollbar-width: thin;
+        scrollbar-color: #424242 transparent;
+      }
+
+      .vscode-scrollbar::-moz-scrollbar-thumb {
+        background: #424242;
+        border-radius: 5px;
+      }
+
+      /* VS Code Markdown Preview Styles */
+      .vscode-markdown-preview {
+        overflow-y: auto;
+      }
+
+      .vscode-markdown-preview h1 {
+        font-size: 1.5em;
+        font-weight: 600;
+        margin: 0.75em 0;
+        border-bottom: 1px solid #3c3c3c;
+        padding-bottom: 0.3em;
+        color: #d4d4d4;
+      }
+
+      .vscode-markdown-preview h2 {
+        font-size: 1.25em;
+        font-weight: 600;
+        margin: 0.75em 0;
+        border-bottom: 1px solid #3c3c3c;
+        padding-bottom: 0.2em;
+        color: #d4d4d4;
+      }
+
+      .vscode-markdown-preview h3 {
+        font-size: 1.1em;
+        font-weight: 600;
+        margin: 0.75em 0;
+        color: #d4d4d4;
+      }
+
+      .vscode-markdown-preview p {
+        margin: 0.5em 0;
+        line-height: 1.6;
+        color: #d4d4d4;
+      }
+
+      .vscode-markdown-preview ul, .vscode-markdown-preview ol {
+        margin: 0.5em 0;
+        padding-left: 1.5em;
+        color: #d4d4d4;
+      }
+
+      .vscode-markdown-preview li {
+        margin: 0.25em 0;
+      }
+
+      .vscode-markdown-preview code {
+        background-color: #2d2d2d;
+        padding: 0.1em 0.4em;
+        border-radius: 3px;
+        font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+        color: #d4d4d4;
+        font-size: 0.9em;
+      }
+
+      .vscode-markdown-preview pre {
+        background-color: #1e1e1e;
+        border: 1px solid #3c3c3c;
+        border-radius: 4px;
+        padding: 1em;
+        margin: 0.75em 0;
+        overflow-x: auto;
+      }
+
+      .vscode-markdown-preview pre code {
+        background: none;
+        padding: 0;
+        border: none;
+      }
+
+      .vscode-markdown-preview blockquote {
+        border-left: 4px solid #007acc;
+        margin: 0.5em 0;
+        padding-left: 1em;
+        color: #9cdcfe;
+        background-color: rgba(0, 122, 204, 0.05);
+        border-radius: 0 4px 4px 0;
+        padding: 0.5em 1em;
+      }
+
+      .vscode-markdown-preview a {
+        color: #3794ff;
+        text-decoration: none;
+        border-bottom: 1px solid transparent;
+        transition: all 0.2s ease;
+      }
+
+      .vscode-markdown-preview a:hover {
+        color: #1a9fff;
+        border-bottom-color: #1a9fff;
+      }
+
+      .vscode-markdown-preview hr {
+        border: none;
+        border-top: 1px solid #3c3c3c;
+        margin: 1.5em 0;
+      }
+
+      .vscode-markdown-preview table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0.75em 0;
+        border: 1px solid #3c3c3c;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .vscode-markdown-preview th, .vscode-markdown-preview td {
+        border: 1px solid #3c3c3c;
+        padding: 0.5em;
+        text-align: left;
+      }
+
+      .vscode-markdown-preview th {
+        background-color: #252526;
+        font-weight: 600;
+        color: #d4d4d4;
+      }
+
+      .vscode-markdown-preview tr:nth-child(even) {
+        background-color: rgba(255, 255, 255, 0.02);
+      }
     </style>
   </head>
   <body>

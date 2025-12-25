@@ -16,11 +16,23 @@ const DEFAULT_CONFIG: PowerConfig = {
 };
 
 // Colors for different levels - Terminal Green Theme
-const LEVEL_COLORS = {
+const TERMINAL_LEVEL_COLORS = {
   [PowerLevel.None]: ['#006600', '#008800'], // Dim Green
   [PowerLevel.Power]: ['#00cc00', '#00dd00', '#00ff00', '#33ff33'], // Green shades
   [PowerLevel.SuperPower]: ['#00ff00', '#33ff33', '#66ff66', '#aaffaa'], // Bright Green/White-ish
   [PowerLevel.ManyPower]: ['#00ff00', '#33ff33', '#aaffaa', '#ffffff'], // Intense Green/White
+};
+
+// Colors for different levels - VS Code Blue Theme
+const VSCODE_LEVEL_COLORS = {
+  [PowerLevel.None]: ['#424242', '#555555'], // Dim Gray
+  [PowerLevel.Power]: ['#007acc', '#1a9fff', '#3794ff', '#4fc3f7'], // Blue shades
+  [PowerLevel.SuperPower]: ['#1a9fff', '#4fc3f7', '#81d4fa', '#b3e5fc'], // Bright Blue/White-ish
+  [PowerLevel.ManyPower]: ['#3794ff', '#4fc3f7', '#81d4fa', '#ffffff'], // Intense Blue/White
+};
+
+const getLevelColors = (theme: ThemeMode, level: PowerLevel): string[] => {
+  return theme === 'terminal' ? TERMINAL_LEVEL_COLORS[level] : VSCODE_LEVEL_COLORS[level];
 };
 
 const COMBO_THRESHOLDS = {
@@ -46,6 +58,7 @@ export default function App() {
   const [hudSide, setHudSide] = useState<'left' | 'right'>('right');
   const [viewMode, setViewMode] = useState<ViewMode>('edit');
   const [copied, setCopied] = useState(false);
+  const [themeMode, setThemeMode] = useState<ThemeMode>('terminal');
   
   // Refs for engine
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -74,7 +87,7 @@ export default function App() {
     if (level === PowerLevel.SuperPower) count *= 1.5;
     if (level === PowerLevel.ManyPower) count *= 2.5;
 
-    const colors = LEVEL_COLORS[level];
+    const colors = getLevelColors(themeMode, level);
 
     for (let i = 0; i < count; i++) {
       const angle = random(0, Math.PI * 2);
@@ -141,7 +154,7 @@ export default function App() {
     }
 
     lastTimeRef.current = requestAnimationFrame(updateAndDraw);
-  }, [config, currentLevel]);
+  }, [config, currentLevel, themeMode]);
 
   // Start Loop
   useEffect(() => {
@@ -240,17 +253,75 @@ export default function App() {
   };
 
   const getLevelColorClass = () => {
-    switch (currentLevel) {
-      case PowerLevel.ManyPower: return 'crt-glow text-white';
-      case PowerLevel.SuperPower: return 'crt-glow text-[#aaffaa]';
-      case PowerLevel.Power: return 'crt-glow-subtle text-terminal';
-      default: return 'text-[#006600]';
+    if (isTerminal) {
+      switch (currentLevel) {
+        case PowerLevel.ManyPower: return 'crt-glow text-white';
+        case PowerLevel.SuperPower: return 'crt-glow text-[#aaffaa]';
+        case PowerLevel.Power: return 'crt-glow-subtle text-terminal';
+        default: return 'text-[#006600]';
+      }
+    } else {
+      switch (currentLevel) {
+        case PowerLevel.ManyPower: return 'text-white';
+        case PowerLevel.SuperPower: return 'text-[#4fc3f7]';
+        case PowerLevel.Power: return 'text-[#007acc]';
+        default: return 'text-[#555555]';
+      }
     }
   };
 
+  // Theme-based color helpers
+  const getPrimaryColor = () => themeMode === 'terminal' ? '#33ff33' : '#d4d4d4';
+  const getSecondaryColor = () => themeMode === 'terminal' ? '#008800' : '#858585';
+  const getAccentColor = () => themeMode === 'terminal' ? '#00ff00' : '#007acc';
+  const getBgColor = () => themeMode === 'terminal' ? '#000000' : '#1e1e1e';
+  const getBorderColor = () => themeMode === 'terminal' ? '#33ff33' : '#3c3c3c';
+  const getHeaderBgColor = () => themeMode === 'terminal' ? '#050505' : '#252526';
+
+  // Theme-based class helpers
+  const isTerminal = themeMode === 'terminal';
+  const bodyContainerClass = isTerminal
+    ? 'min-h-screen bg-terminal overflow-hidden flex flex-col crt-scanlines'
+    : 'min-h-screen bg-[#1e1e1e] overflow-hidden flex flex-col';
+
+  const curvatureFlickerClass = isTerminal ? 'crt-curvature crt-flicker' : '';
+  const headerClass = isTerminal
+    ? 'relative z-10 hidden sm:flex p-2 justify-between items-center border-b-2 border-terminal bg-terminal-black'
+    : 'relative z-10 hidden sm:flex px-3 py-2 justify-between items-center border-b border-[#3c3c3c] bg-[#252526]';
+
+  const terminalBtnClass = isTerminal
+    ? 'terminal-btn p-1'
+    : 'vscode-btn p-1.5';
+
+  const asciiBoxClass = isTerminal
+    ? 'relative w-full h-full ascii-box bg-terminal-black'
+    : 'relative w-full h-full vscode-box bg-[#1e1e1e]';
+
+  const textareaClass = isTerminal
+    ? 'block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-terminal text-terminal focus:outline-none resize-none leading-relaxed selection:bg-terminal selection:text-black'
+    : 'vscode-cursor vscode-scrollbar w-full h-full bg-transparent border-0 p-6 text-base sm:text-sm font-mono text-[#d4d4d4] focus:outline-none resize-none leading-relaxed selection:bg-[#007acc] selection:text-white rounded-md';
+
+  const previewClass = isTerminal
+    ? 'terminal-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-terminal text-terminal leading-relaxed markdown-preview'
+    : 'vscode-scrollbar w-full h-full bg-transparent border-0 p-6 text-base sm:text-sm font-mono text-[#d4d4d4] leading-relaxed vscode-markdown-preview';
+
+  const editorWrapperClass = isTerminal
+    ? 'w-full h-[85vh] sm:max-w-[calc(100vw-160px)] sm:h-[calc(100vh-120px)] relative z-20'
+    : 'w-full h-[85vh] sm:max-w-[calc(100vw-200px)] sm:h-[calc(100vh-140px)] relative z-20';
+
+  const mainClass = isTerminal
+    ? `flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative ${shakeClass}`
+    : `flex-1 flex flex-col items-center justify-start p-4 relative ${shakeClass}`;
+
+  const configSidebarClass = isTerminal
+    ? `fixed inset-y-0 right-0 w-80 bg-terminal border-l-2 border-terminal shadow-lg transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`
+    : `fixed inset-y-0 right-0 w-80 bg-[#252526] border-l border-[#3c3c3c] shadow-2xl transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`;
+
+  const rangeInputClass = isTerminal ? 'w-full terminal-range' : 'w-full vscode-range';
+
   return (
-    <div className="relative min-h-screen bg-terminal overflow-hidden flex flex-col crt-scanlines">
-      <div className="crt-curvature crt-flicker" />
+    <div className={bodyContainerClass}>
+      {isTerminal && <div className={curvatureFlickerClass} />}
       {/* Particle Canvas Overlay */}
       <canvas
         ref={canvasRef}
@@ -258,51 +329,71 @@ export default function App() {
       />
 
       {/* Header - Hidden on mobile */}
-      <header className="relative z-10 hidden sm:flex p-2 justify-between items-center border-b-2 border-terminal bg-terminal-black">
+      <header className={headerClass}>
         <div className="flex items-center gap-2">
-          <div className={`p-1 border-2 ${currentLevel >= PowerLevel.ManyPower ? 'border-white animate-pulse' : 'border-terminal'}`}>
-             {currentLevel >= PowerLevel.ManyPower ? <Flame className="w-4 h-4 text-white crt-glow" /> : <Zap className="w-4 h-4 text-terminal crt-glow" />}
+          <div className={`p-1 border-2 ${isTerminal
+            ? (currentLevel >= PowerLevel.ManyPower ? 'border-white animate-pulse' : 'border-terminal')
+            : 'border-[#3c3c3c] rounded'}`}>
+             {currentLevel >= PowerLevel.ManyPower
+              ? <Flame className={`w-4 h-4 ${isTerminal ? 'text-white crt-glow' : 'text-white'}`} />
+              : <Zap className={`w-4 h-4 ${isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}`} />
+             }
           </div>
           <div>
-            <h1 className="font-terminal text-lg tracking-tight text-terminal crt-glow">POWER MODE TYPER v1.0</h1>
-            <p className="text-terminal-dim text-xs font-terminal">&gt; TYPE FAST TO INCREASE POWER</p>
+            <h1 className={`font-terminal text-lg tracking-tight ${isTerminal ? 'text-terminal crt-glow' : 'text-[#d4d4d4] font-mono'}`}>
+              POWER MODE TYPER v1.0
+            </h1>
+            <p className={`text-xs font-terminal ${isTerminal ? 'text-terminal-dim' : 'text-[#858585] font-mono'}`}>
+              {isTerminal ? '&gt; TYPE FAST TO INCREASE POWER' : 'Type fast to increase power'}
+            </p>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <div className="text-right font-terminal">
-            <div className="text-terminal-dim text-xs uppercase tracking-wider">MAX STREAK</div>
-            <div className="text-base text-terminal crt-glow">{maxCombo}</div>
+          <div className={`text-right ${isTerminal ? 'font-terminal' : 'font-mono'}`}>
+            <div className={`text-xs uppercase tracking-wider ${isTerminal ? 'text-terminal-dim' : 'text-[#858585]'}`}>MAX STREAK</div>
+            <div className={`text-base ${isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}`}>{maxCombo}</div>
           </div>
           <button
             onClick={handleCopy}
-            className="terminal-btn p-1"
+            className={terminalBtnClass}
             title={copied ? 'Copied!' : 'Copy'}
           >
-            {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4" />}
+            {copied ? <Check className={`w-4 h-4 ${isTerminal ? 'text-white' : 'text-[#007acc]'}`} /> : <Copy className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />}
           </button>
           <button
             onClick={() => setViewMode(viewMode === 'edit' ? 'preview' : 'edit')}
-            className="terminal-btn p-1"
+            className={terminalBtnClass}
             title={viewMode === 'edit' ? 'Preview' : 'Edit'}
           >
-            {viewMode === 'edit' ? <Eye className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
+            {viewMode === 'edit'
+              ? <Eye className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />
+              : <Edit className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />
+            }
+          </button>
+          <button
+            onClick={() => setThemeMode(themeMode === 'terminal' ? 'vscode' : 'terminal')}
+            className={terminalBtnClass}
+            title={`Switch to ${themeMode === 'terminal' ? 'VS Code Theme' : 'Terminal Theme'}`}
+          >
+            {themeMode === 'terminal' ? <Monitor className="w-4 h-4" /> : <Terminal className="w-4 h-4" />}
           </button>
           <button
             onClick={() => setShowConfig(!showConfig)}
-            className="terminal-btn p-1"
+            className={terminalBtnClass}
           >
-            <Settings className="w-4 h-4" />
+            <Settings className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />
           </button>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className={`flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative ${shakeClass}`}>
+      <main className={mainClass}>
 
         {/* Text Editor Wrapper */}
-        <div className="w-full h-[85vh] sm:max-w-[calc(100vw-160px)] sm:h-[calc(100vh-120px)] relative z-20">
-          <div className="absolute inset-0 bg-terminal/10 blur-xl transform scale-105 opacity-50" />
+        <div className={editorWrapperClass}>
+          {!isTerminal && <div className="absolute inset-0 bg-[#007acc]/5 blur-xl transform scale-105 opacity-30" />}
+          {isTerminal && <div className="absolute inset-0 bg-terminal/10 blur-xl transform scale-105 opacity-50" />}
 
           {/* Dynamic Combo HUD */}
           <div
@@ -333,17 +424,19 @@ export default function App() {
                     [{getLevelLabel()}]
                    </div>
                    {currentLevel === PowerLevel.ManyPower && (
-                      <span className="text-xs text-terminal-dim font-terminal">&lt;USE WITH CAUTION&gt;</span>
+                      <span className={`text-xs font-terminal ${isTerminal ? 'text-terminal-dim' : 'text-[#858585]'}`}>
+                        {isTerminal ? '&lt;USE WITH CAUTION&gt;' : '<use with caution>'}
+                      </span>
                    )}
                 </div>
               )}
 
               {/* Mini Progress Bar */}
-              <div className="w-32 h-2 border border-terminal-dim mt-2 overflow-hidden">
+              <div className={`w-32 h-2 border mt-2 overflow-hidden ${isTerminal ? 'border-terminal-dim' : 'border-[#3c3c3c]'}`}>
                  <div className={`w-full flex ${hudSide === 'right' ? 'justify-end' : 'justify-start'}`}>
                    <div
                      key={combo}
-                     className="h-full bg-terminal"
+                     className={`h-full ${isTerminal ? 'bg-terminal' : 'bg-[#007acc]'}`}
                      style={{
                        width: '100%',
                        animation: `drain 1.5s linear forwards`
@@ -354,36 +447,35 @@ export default function App() {
             </div>
           </div>
 
-          {/* ASCII Box Border */}
-          <div className="relative w-full h-full ascii-box bg-terminal-black">
-            {/* Corner ASCII */}
-            <div className="absolute -top-3 -left-3 text-terminal text-2xl font-terminal">+</div>
-            <div className="absolute -top-3 -right-3 text-terminal text-2xl font-terminal">+</div>
-            <div className="absolute -bottom-3 -left-3 text-terminal text-2xl font-terminal">+</div>
-            <div className="absolute -bottom-3 -right-3 text-terminal text-2xl font-terminal">+</div>
+          {/* Editor Box */}
+          <div className={asciiBoxClass}>
+            {/* Corner ASCII - Terminal only */}
+            {isTerminal && (
+              <>
+                <div className="absolute -top-3 -left-3 text-terminal text-2xl font-terminal">+</div>
+                <div className="absolute -top-3 -right-3 text-terminal text-2xl font-terminal">+</div>
+                <div className="absolute -bottom-3 -left-3 text-terminal text-2xl font-terminal">+</div>
+                <div className="absolute -bottom-3 -right-3 text-terminal text-2xl font-terminal">+</div>
+              </>
+            )}
 
             <textarea
               ref={inputRef}
               value={text}
               onChange={handleInput}
               spellCheck={false}
-              className="block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8
-                         text-lg sm:text-sm font-terminal text-terminal
-                         focus:outline-none resize-none leading-relaxed
-                         selection:bg-terminal selection:text-black"
-              placeholder="// START TYPING TO CHARGE YOUR POWER..."
+              className={textareaClass}
+              placeholder={isTerminal ? "// START TYPING TO CHARGE YOUR POWER..." : "// Start typing to charge your power..."}
               style={{ display: viewMode === 'edit' ? 'block' : 'none' }}
             />
             <div
-              className="terminal-scrollbar w-full h-full bg-transparent border-0 p-8
-                         text-lg sm:text-sm font-terminal text-terminal
-                         leading-relaxed markdown-preview"
+              className={previewClass}
               style={{ display: viewMode === 'preview' ? 'block' : 'none' }}
             >
               <ReactMarkdown>{text}</ReactMarkdown>
             </div>
 
-            <div className="absolute bottom-4 right-4 text-sm text-terminal-dim font-terminal pointer-events-none">
+            <div className={`absolute bottom-4 right-4 text-sm font-mono pointer-events-none ${isTerminal ? 'text-terminal-dim' : 'text-[#858585]'}`}>
               [{text.length} CHARS]
             </div>
           </div>
@@ -391,96 +483,98 @@ export default function App() {
       </main>
 
       {/* Configuration Sidebar */}
-      <div className={`fixed inset-y-0 right-0 w-80 bg-terminal border-l-2 border-terminal shadow-lg transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={configSidebarClass}>
         <div className="p-6 h-full overflow-y-auto">
-          <div className="flex justify-between items-center mb-8 border-b border-terminal-dim pb-4">
-            <h2 className="font-terminal text-xl text-terminal flex items-center gap-2 crt-glow">
-              [ CONFIG ]
+          <div className={`flex justify-between items-center mb-8 border-b ${isTerminal ? 'border-terminal-dim' : 'border-[#3c3c3c]'} pb-4`}>
+            <h2 className={`text-xl flex items-center gap-2 ${isTerminal ? 'font-terminal text-terminal crt-glow' : 'font-mono text-[#d4d4d4]'}`}>
+              {isTerminal ? '[ CONFIG ]' : 'Config'}
             </h2>
             <div className="flex items-center gap-3">
-              <button onClick={() => setConfig(DEFAULT_CONFIG)} className="terminal-btn px-2 py-1 text-sm font-terminal">
-                <RefreshCcw className="w-4 h-4" />
+              <button onClick={() => setConfig(DEFAULT_CONFIG)} className={terminalBtnClass}>
+                <RefreshCcw className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />
               </button>
               <button
                 onClick={() => setShowConfig(false)}
-                className="terminal-btn p-1"
+                className={terminalBtnClass}
               >
-                <X className="w-5 h-5" />
+                <X className={`w-5 h-5 ${isTerminal ? '' : 'text-[#858585]'}`} />
               </button>
             </div>
           </div>
 
           <div className="space-y-6">
-            <ControlGroup label="PARTICLES PER KEY">
+            <ControlGroup label="PARTICLES PER KEY" isTerminal={isTerminal}>
               <input
                 type="range" min="1" max="20" step="1"
                 value={config.particleCount}
                 onChange={(e) => setConfig({...config, particleCount: Number(e.target.value)})}
-                className="w-full terminal-range"
+                className={rangeInputClass}
               />
-              <div className="flex justify-between text-terminal-dim text-sm font-terminal mt-1">
+              <div className={`flex justify-between text-sm mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
                 <span>[1]</span>
-                <span className="text-terminal crt-glow">[{config.particleCount}]</span>
+                <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.particleCount}]</span>
                 <span>[20]</span>
               </div>
             </ControlGroup>
 
-            <ControlGroup label="GRAVITY">
+            <ControlGroup label="GRAVITY" isTerminal={isTerminal}>
               <input
                 type="range" min="0" max="2" step="0.05"
                 value={config.gravity}
                 onChange={(e) => setConfig({...config, gravity: Number(e.target.value)})}
-                className="w-full terminal-range"
+                className={rangeInputClass}
               />
-              <div className="flex justify-between text-terminal-dim text-sm font-terminal mt-1">
+              <div className={`flex justify-between text-sm mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
                 <span>[ZERO]</span>
-                <span className="text-terminal crt-glow">[{config.gravity.toFixed(2)}]</span>
+                <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.gravity.toFixed(2)}]</span>
                 <span>[HEAVY]</span>
               </div>
             </ControlGroup>
 
-            <ControlGroup label="VELOCITY">
+            <ControlGroup label="VELOCITY" isTerminal={isTerminal}>
               <input
                 type="range" min="1" max="15" step="1"
                 value={config.velocity}
                 onChange={(e) => setConfig({...config, velocity: Number(e.target.value)})}
-                className="w-full terminal-range"
+                className={rangeInputClass}
               />
-               <div className="flex justify-between text-terminal-dim text-sm font-terminal mt-1">
+               <div className={`flex justify-between text-sm mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
                 <span>[SLOW]</span>
-                <span className="text-terminal crt-glow">[{config.velocity}]</span>
+                <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.velocity}]</span>
                 <span>[FAST]</span>
               </div>
             </ControlGroup>
 
-            <ControlGroup label="PARTICLE SIZE">
+            <ControlGroup label="PARTICLE SIZE" isTerminal={isTerminal}>
               <input
                 type="range" min="1" max="10" step="0.5"
                 value={config.baseRadius}
                 onChange={(e) => setConfig({...config, baseRadius: Number(e.target.value)})}
-                className="w-full terminal-range"
+                className={rangeInputClass}
               />
-              <div className="flex justify-between text-terminal-dim text-sm font-terminal mt-1">
+              <div className={`flex justify-between text-sm mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
                 <span>[SMALL]</span>
-                <span className="text-terminal crt-glow">[{config.baseRadius}]</span>
+                <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.baseRadius}]</span>
                 <span>[LARGE]</span>
               </div>
             </ControlGroup>
 
-            <div className="pt-6 border-t-2 border-terminal-dim">
-               <h3 className="font-terminal text-sm text-terminal mb-2">&gt; THRESHOLDS:</h3>
-               <div className="text-sm text-terminal-dim font-terminal space-y-2">
+            <div className={`pt-6 border-t-2 ${isTerminal ? 'border-terminal-dim' : 'border-[#3c3c3c]'}`}>
+               <h3 className={`text-sm mb-2 ${isTerminal ? 'font-terminal text-terminal' : 'font-mono text-[#858585]'}`}>
+                 {isTerminal ? '&gt; THRESHOLDS:' : 'Thresholds:'}
+               </h3>
+               <div className={`text-sm space-y-2 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
                  <div className="flex justify-between">
                    <span>POWER LEVEL</span>
-                   <span className="text-terminal">[{COMBO_THRESHOLDS.POWER}]</span>
+                   <span className={isTerminal ? 'text-terminal' : 'text-[#d4d4d4]'}>[{COMBO_THRESHOLDS.POWER}]</span>
                  </div>
                  <div className="flex justify-between">
                    <span>SUPER POWER</span>
-                   <span className="text-terminal crt-glow">[{COMBO_THRESHOLDS.SUPER}]</span>
+                   <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{COMBO_THRESHOLDS.SUPER}]</span>
                  </div>
                  <div className="flex justify-between">
                    <span>MANY POWER</span>
-                   <span className="text-white crt-glow">[{COMBO_THRESHOLDS.MANY}]</span>
+                   <span className={isTerminal ? 'text-white crt-glow' : 'text-[#007acc]'}>[{COMBO_THRESHOLDS.MANY}]</span>
                  </div>
                </div>
             </div>
@@ -491,9 +585,11 @@ export default function App() {
   );
 }
 
-const ControlGroup: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+const ControlGroup: React.FC<{ label: string; children: React.ReactNode; isTerminal?: boolean }> = ({ label, children, isTerminal = true }) => (
   <div>
-    <label className="block text-sm font-terminal text-terminal crt-glow-subtle mb-3 tracking-wider">[{label}]</label>
+    <label className={`block text-sm mb-3 ${isTerminal ? 'font-terminal text-terminal crt-glow-subtle tracking-wider' : 'font-mono text-[#d4d4d4] tracking-wider'}`}>
+      {isTerminal ? `[${label}]` : `${label}`}
+    </label>
     {children}
   </div>
 );
