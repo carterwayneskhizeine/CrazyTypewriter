@@ -286,8 +286,8 @@ export default function App() {
 
   const curvatureFlickerClass = isTerminal ? 'crt-curvature crt-flicker' : '';
   const headerClass = isTerminal
-    ? 'relative z-10 hidden sm:flex p-2 justify-between items-center border-b-2 border-terminal bg-terminal-black'
-    : 'relative z-10 hidden sm:flex px-3 py-2 justify-between items-center border-b border-[#3c3c3c] bg-[#252526]';
+    ? 'relative z-10 flex p-2 justify-between items-center border-b-2 border-terminal bg-terminal-black'
+    : 'relative z-10 flex px-3 py-2 justify-between items-center border-b border-[#3c3c3c] bg-[#252526]';
 
   const terminalBtnClass = isTerminal
     ? 'terminal-btn p-1'
@@ -299,19 +299,19 @@ export default function App() {
 
   const textareaClass = isTerminal
     ? 'block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-terminal text-terminal focus:outline-none resize-none leading-relaxed selection:bg-terminal selection:text-black'
-    : 'vscode-cursor vscode-scrollbar w-full h-full bg-transparent border-0 p-6 text-base sm:text-sm font-mono text-[#d4d4d4] focus:outline-none resize-none leading-relaxed selection:bg-[#007acc] selection:text-white rounded-md';
+    : 'vscode-cursor vscode-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-mono text-[#d4d4d4] focus:outline-none resize-none leading-relaxed selection:bg-[#007acc] selection:text-white rounded-md';
 
   const previewClass = isTerminal
     ? 'terminal-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-terminal text-terminal leading-relaxed markdown-preview'
-    : 'vscode-scrollbar w-full h-full bg-transparent border-0 p-6 text-base sm:text-sm font-mono text-[#d4d4d4] leading-relaxed vscode-markdown-preview';
+    : 'vscode-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-mono text-[#d4d4d4] leading-relaxed vscode-markdown-preview';
 
   const editorWrapperClass = isTerminal
     ? 'w-full h-[85vh] sm:max-w-[calc(100vw-160px)] sm:h-[calc(100vh-120px)] relative z-20'
-    : 'w-full h-[85vh] sm:max-w-[calc(100vw-200px)] sm:h-[calc(100vh-140px)] relative z-20';
+    : 'w-full h-[85vh] sm:max-w-[calc(100vw-160px)] sm:h-[calc(100vh-120px)] relative z-20';
 
   const mainClass = isTerminal
     ? `flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative ${shakeClass}`
-    : `flex-1 flex flex-col items-center justify-start p-4 relative ${shakeClass}`;
+    : `flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative ${shakeClass}`;
 
   const configSidebarClass = isTerminal
     ? `fixed inset-y-0 right-0 w-80 bg-terminal border-l-2 border-terminal shadow-lg transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`
@@ -328,9 +328,9 @@ export default function App() {
         className="fixed top-0 left-0 pointer-events-none z-50 w-full h-full"
       />
 
-      {/* Header - Hidden on mobile */}
+      {/* Header - Show buttons on mobile, full header on desktop */}
       <header className={headerClass}>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 hidden sm:flex">
           <div className={`p-1 border-2 ${isTerminal
             ? (currentLevel >= PowerLevel.ManyPower ? 'border-white animate-pulse' : 'border-terminal')
             : 'border-[#3c3c3c] rounded'}`}>
@@ -349,8 +349,9 @@ export default function App() {
           </div>
         </div>
 
+        {/* Buttons - Show on both mobile and desktop */}
         <div className="flex items-center gap-2">
-          <div className={`text-right ${isTerminal ? 'font-terminal' : 'font-mono'}`}>
+          <div className={`text-right hidden sm:block ${isTerminal ? 'font-terminal' : 'font-mono'}`}>
             <div className={`text-xs uppercase tracking-wider ${isTerminal ? 'text-terminal-dim' : 'text-[#858585]'}`}>MAX STREAK</div>
             <div className={`text-base ${isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}`}>{maxCombo}</div>
           </div>
