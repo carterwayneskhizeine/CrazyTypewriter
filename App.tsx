@@ -242,36 +242,36 @@ export default function App() {
       />
 
       {/* Header - Hidden on mobile */}
-      <header className="relative z-10 hidden sm:flex p-4 justify-between items-center border-b-2 border-terminal bg-terminal-black">
-        <div className="flex items-center gap-3">
-          <div className={`p-2 border-2 ${currentLevel >= PowerLevel.ManyPower ? 'border-white animate-pulse' : 'border-terminal'}`}>
-             {currentLevel >= PowerLevel.ManyPower ? <Flame className="w-6 h-6 text-white crt-glow" /> : <Zap className="w-6 h-6 text-terminal crt-glow" />}
+      <header className="relative z-10 hidden sm:flex p-2 justify-between items-center border-b-2 border-terminal bg-terminal-black">
+        <div className="flex items-center gap-2">
+          <div className={`p-1 border-2 ${currentLevel >= PowerLevel.ManyPower ? 'border-white animate-pulse' : 'border-terminal'}`}>
+             {currentLevel >= PowerLevel.ManyPower ? <Flame className="w-4 h-4 text-white crt-glow" /> : <Zap className="w-4 h-4 text-terminal crt-glow" />}
           </div>
           <div>
-            <h1 className="font-terminal text-2xl tracking-tight text-terminal crt-glow">POWER MODE TYPER v1.0</h1>
-            <p className="text-terminal-dim text-sm font-terminal">&gt; TYPE FAST TO INCREASE POWER</p>
+            <h1 className="font-terminal text-lg tracking-tight text-terminal crt-glow">POWER MODE TYPER v1.0</h1>
+            <p className="text-terminal-dim text-xs font-terminal">&gt; TYPE FAST TO INCREASE POWER</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <div className="text-right font-terminal">
-            <div className="text-terminal-dim text-sm uppercase tracking-wider">MAX STREAK</div>
-            <div className="text-xl text-terminal crt-glow">{maxCombo}</div>
+            <div className="text-terminal-dim text-xs uppercase tracking-wider">MAX STREAK</div>
+            <div className="text-base text-terminal crt-glow">{maxCombo}</div>
           </div>
           <button
             onClick={() => setShowConfig(!showConfig)}
-            className="terminal-btn p-2"
+            className="terminal-btn p-1"
           >
-            <Settings className="w-6 h-6" />
+            <Settings className="w-4 h-4" />
           </button>
         </div>
       </header>
 
       {/* Main Content Area */}
-      <main className={`flex-1 flex flex-col items-center justify-center p-2 sm:p-4 sm:p-8 relative ${shakeClass}`}>
+      <main className={`flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative ${shakeClass}`}>
 
         {/* Text Editor Wrapper */}
-        <div className="w-full max-w-4xl h-[85vh] sm:h-[60vh] relative z-20">
+        <div className="w-full h-[85vh] sm:max-w-[calc(100vw-160px)] sm:h-[calc(100vh-120px)] relative z-20">
           <div className="absolute inset-0 bg-terminal/10 blur-xl transform scale-105 opacity-50" />
 
           {/* Dynamic Combo HUD */}
