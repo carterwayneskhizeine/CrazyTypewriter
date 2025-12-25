@@ -241,8 +241,8 @@ export default function App() {
         className="fixed top-0 left-0 pointer-events-none z-50 w-full h-full"
       />
 
-      {/* Header */}
-      <header className="relative z-10 p-4 flex justify-between items-center border-b-2 border-terminal bg-terminal-black">
+      {/* Header - Hidden on mobile */}
+      <header className="relative z-10 hidden sm:flex p-4 justify-between items-center border-b-2 border-terminal bg-terminal-black">
         <div className="flex items-center gap-3">
           <div className={`p-2 border-2 ${currentLevel >= PowerLevel.ManyPower ? 'border-white animate-pulse' : 'border-terminal'}`}>
              {currentLevel >= PowerLevel.ManyPower ? <Flame className="w-6 h-6 text-white crt-glow" /> : <Zap className="w-6 h-6 text-terminal crt-glow" />}
@@ -254,7 +254,7 @@ export default function App() {
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block font-terminal">
+          <div className="text-right font-terminal">
             <div className="text-terminal-dim text-sm uppercase tracking-wider">MAX STREAK</div>
             <div className="text-xl text-terminal crt-glow">{maxCombo}</div>
           </div>
@@ -268,10 +268,10 @@ export default function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className={`flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative ${shakeClass}`}>
+      <main className={`flex-1 flex flex-col items-center justify-center p-2 sm:p-4 sm:p-8 relative ${shakeClass}`}>
 
         {/* Text Editor Wrapper */}
-        <div className="w-full max-w-4xl h-[60vh] relative z-20">
+        <div className="w-full max-w-4xl h-[85vh] sm:h-[60vh] relative z-20">
           <div className="absolute inset-0 bg-terminal/10 blur-xl transform scale-105 opacity-50" />
 
           {/* Dynamic Combo HUD */}

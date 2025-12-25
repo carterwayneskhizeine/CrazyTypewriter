@@ -2,5 +2,5 @@ services:
   app:
     build: .
     ports:
-      - "5111:80"
+      - "0.0.0.0:5111:80"
     restart: always
