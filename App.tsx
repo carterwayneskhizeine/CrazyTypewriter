@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings, Zap, Flame, Crown, RefreshCcw, X } from 'lucide-react';
+import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit } from 'lucide-react';
+import ReactMarkdown from 'react-markdown';
 import { getCaretCoordinates } from './utils/caret';
 import { PowerConfig, Particle, PowerLevel } from './types';
 
@@ -31,6 +32,8 @@ const COMBO_THRESHOLDS = {
 // Helper for random range
 const random = (min: number, max: number) => Math.random() * (max - min) + min;
 
+type ViewMode = 'edit' | 'preview';
+
 export default function App() {
   const [text, setText] = useState<string>('Type here to unleash power...');
   const [combo, setCombo] = useState(0);
@@ -40,6 +43,7 @@ export default function App() {
   const [shakeClass, setShakeClass] = useState('');
   const [caretY, setCaretY] = useState(0);
   const [hudSide, setHudSide] = useState<'left' | 'right'>('right');
+  const [viewMode, setViewMode] = useState<ViewMode>('edit');
   
   // Refs for engine
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -259,6 +263,13 @@ export default function App() {
             <div className="text-base text-terminal crt-glow">{maxCombo}</div>
           </div>
           <button
+            onClick={() => setViewMode(viewMode === 'edit' ? 'preview' : 'edit')}
+            className="terminal-btn p-1"
+            title={viewMode === 'edit' ? 'Preview' : 'Edit'}
+          >
+            {viewMode === 'edit' ? <Eye className="w-4 h-4" /> : <Edit className="w-4 h-4" />}
+          </button>
+          <button
             onClick={() => setShowConfig(!showConfig)}
             className="terminal-btn p-1"
           >
@@ -337,12 +348,21 @@ export default function App() {
               value={text}
               onChange={handleInput}
               spellCheck={false}
-              className="block-cursor w-full h-full bg-transparent border-0 p-8
-                         text-lg sm:text-xl font-terminal text-terminal
+              className="block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8
+                         text-lg sm:text-sm font-terminal text-terminal
                          focus:outline-none resize-none leading-relaxed
                          selection:bg-terminal selection:text-black"
               placeholder="// START TYPING TO CHARGE YOUR POWER..."
+              style={{ display: viewMode === 'edit' ? 'block' : 'none' }}
             />
+            <div
+              className="terminal-scrollbar w-full h-full bg-transparent border-0 p-8
+                         text-lg sm:text-sm font-terminal text-terminal
+                         leading-relaxed markdown-preview"
+              style={{ display: viewMode === 'preview' ? 'block' : 'none' }}
+            >
+              <ReactMarkdown>{text}</ReactMarkdown>
+            </div>
 
             <div className="absolute bottom-4 right-4 text-sm text-terminal-dim font-terminal pointer-events-none">
               [{text.length} CHARS]

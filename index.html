@@ -20,22 +20,20 @@
       }
     </script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;600&display=swap');
-
-      /* Retro Terminal Base */
+      /* System Default Fonts */
       body {
         background-color: #000000;
         color: #33ff33;
-        font-family: 'VT323', monospace;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         overflow-x: hidden;
       }
 
       .font-mono {
-        font-family: 'IBM Plex Mono', monospace;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
 
       .font-terminal {
-        font-family: 'VT323', monospace;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       }
 
       /* CRT Screen Glow Effect */
@@ -223,6 +221,160 @@
       /* Progress Bar Animation */
       .combo-bar-drain {
         transition: width 0.1s linear;
+      }
+
+      /* Retro Terminal Scrollbar - Webkit */
+      .terminal-scrollbar::-webkit-scrollbar {
+        width: 12px;
+        height: 12px;
+      }
+
+      .terminal-scrollbar::-webkit-scrollbar-track {
+        background: #050505;
+        border: 1px solid #008800;
+      }
+
+      .terminal-scrollbar::-webkit-scrollbar-thumb {
+        background: #00ff00;
+        border: 2px solid #008800;
+        box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+      }
+
+      .terminal-scrollbar::-webkit-scrollbar-thumb:hover {
+        background: #33ff33;
+        box-shadow: 0 0 10px #00ff00, 0 0 15px #00ff00, 0 0 20px #00ff00;
+      }
+
+      .terminal-scrollbar::-webkit-scrollbar-corner {
+        background: #050505;
+      }
+
+      /* Retro Terminal Scrollbar - Firefox */
+      .terminal-scrollbar {
+        scrollbar-width: auto;
+        scrollbar-color: #00ff00 #050505;
+      }
+
+      .terminal-scrollbar::-moz-scrollbar-track {
+        background: #050505;
+        border: 1px solid #008800;
+      }
+
+      .terminal-scrollbar::-moz-scrollbar-thumb {
+        background: #00ff00;
+        border: 2px solid #008800;
+        box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+      }
+
+      .terminal-scrollbar::-moz-scrollbar-thumb:hover {
+        background: #33ff33;
+      }
+
+      /* Markdown Preview Styles */
+      .markdown-preview {
+        overflow-y: auto;
+      }
+
+      .markdown-preview h1 {
+        font-size: 1.5em;
+        font-weight: bold;
+        margin: 0.5em 0;
+        border-bottom: 1px solid #33ff33;
+        padding-bottom: 0.3em;
+        color: #33ff33;
+      }
+
+      .markdown-preview h2 {
+        font-size: 1.25em;
+        font-weight: bold;
+        margin: 0.5em 0;
+        border-bottom: 1px dashed #00aa00;
+        padding-bottom: 0.2em;
+        color: #33ff33;
+      }
+
+      .markdown-preview h3 {
+        font-size: 1.1em;
+        font-weight: bold;
+        margin: 0.5em 0;
+        color: #33ff33;
+      }
+
+      .markdown-preview p {
+        margin: 0.5em 0;
+        line-height: 1.6;
+      }
+
+      .markdown-preview ul, .markdown-preview ol {
+        margin: 0.5em 0;
+        padding-left: 1.5em;
+      }
+
+      .markdown-preview li {
+        margin: 0.25em 0;
+      }
+
+      .markdown-preview code {
+        background-color: #001a00;
+        padding: 0.1em 0.3em;
+        border-radius: 3px;
+        font-family: monospace;
+        color: #aaffaa;
+        border: 1px solid #008800;
+      }
+
+      .markdown-preview pre {
+        background-color: #001a00;
+        border: 1px solid #008800;
+        padding: 1em;
+        margin: 0.5em 0;
+        overflow-x: auto;
+        border-radius: 5px;
+      }
+
+      .markdown-preview pre code {
+        background: none;
+        padding: 0;
+        border: none;
+      }
+
+      .markdown-preview blockquote {
+        border-left: 3px solid #33ff33;
+        margin: 0.5em 0;
+        padding-left: 1em;
+        color: #00cc00;
+      }
+
+      .markdown-preview a {
+        color: #aaffaa;
+        text-decoration: underline;
+      }
+
+      .markdown-preview a:hover {
+        color: #ffffff;
+        text-shadow: 0 0 10px #00ff00;
+      }
+
+      .markdown-preview hr {
+        border: none;
+        border-top: 1px dashed #008800;
+        margin: 1em 0;
+      }
+
+      .markdown-preview table {
+        border-collapse: collapse;
+        width: 100%;
+        margin: 0.5em 0;
+      }
+
+      .markdown-preview th, .markdown-preview td {
+        border: 1px solid #008800;
+        padding: 0.5em;
+      }
+
+      .markdown-preview th {
+        background-color: #001a00;
+        font-weight: bold;
       }
     </style>
   </head>
