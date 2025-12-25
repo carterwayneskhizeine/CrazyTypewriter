@@ -39,6 +39,7 @@ export default function App() {
   const [showConfig, setShowConfig] = useState(false);
   const [shakeClass, setShakeClass] = useState('');
   const [caretY, setCaretY] = useState(0);
+  const [hudSide, setHudSide] = useState<'left' | 'right'>('right');
   
   // Refs for engine
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -191,6 +192,16 @@ export default function App() {
     const rect = target.getBoundingClientRect();
     const relativeY = coords.top - (rect.top + window.scrollY);
     
+    // Determine which side to show the HUD
+    // coords.left is page absolute X. rect.left is viewport X.
+    // We want position relative to the element's start.
+    const relativeX = coords.left - (rect.left + window.scrollX);
+    const isRightHalf = relativeX > (rect.width / 2);
+    
+    // If cursor is on Right (>50%), HUD goes Left.
+    // If cursor is on Left (<=50%), HUD goes Right.
+    setHudSide(isRightHalf ? 'left' : 'right');
+
     // Textarea has padding (p-8 = 2rem = 32px).
     // The caret relativeY includes this padding.
     // We'll set the caretY state to this value to position the HUD.
@@ -262,20 +273,21 @@ export default function App() {
         <div className="w-full max-w-4xl h-[60vh] relative z-20">
           <div className="absolute inset-0 bg-gradient-to-tr from-slate-800/20 to-cyan-900/20 rounded-xl blur-xl transform scale-105 opacity-50" />
           
-          {/* Dynamic Combo HUD - Moved inside and positioned by caretY */}
+          {/* Dynamic Combo HUD */}
           <div 
             className={`
-              absolute right-8 z-40 pointer-events-none flex flex-col items-end justify-center
-              transition-all duration-75 ease-out
-              ${combo > 0 ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}
+              absolute z-40 pointer-events-none flex flex-col justify-center
+              transition-all duration-300 ease-out
+              ${hudSide === 'right' ? 'right-8 items-end' : 'left-8 items-start'}
+              ${combo > 0 ? 'opacity-100' : 'opacity-0'}
             `}
             style={{ 
               top: caretY,
-              transform: `translateY(-50%) ${combo === 0 ? 'translateX(1rem)' : 'translateX(0)'}` // Center vertically on line
+              transform: `translateY(-50%) translateX(${combo > 0 ? '0' : (hudSide === 'right' ? '2rem' : '-2rem')})`
             }}
           >
-            <div className="flex flex-col items-end">
-              <div className="relative flex items-center gap-2">
+            <div className={`flex flex-col ${hudSide === 'right' ? 'items-end' : 'items-start'}`}>
+              <div className={`relative flex items-center gap-2 ${hudSide === 'right' ? 'flex-row' : 'flex-row-reverse'}`}>
                 {currentLevel >= PowerLevel.ManyPower && (
                   <Crown className="w-6 h-6 text-yellow-400 animate-bounce" fill="currentColor" />
                 )}
@@ -285,7 +297,7 @@ export default function App() {
               </div>
               
               {currentLevel > PowerLevel.None && (
-                <div className="mt-1 flex flex-col items-end">
+                <div className={`mt-1 flex flex-col ${hudSide === 'right' ? 'items-end' : 'items-start'}`}>
                    <div className={`font-black tracking-[0.2em] text-xs sm:text-sm animate-pulse ${getLevelColorClass()}`}>
                     {getLevelLabel()}
                    </div>
@@ -296,15 +308,17 @@ export default function App() {
               )}
               
               {/* Mini Progress Bar */}
-              <div className="w-24 h-1 bg-slate-800/50 mt-2 rounded-full overflow-hidden backdrop-blur">
-                 <div 
-                   key={combo}
-                   className={`h-full ${currentLevel === PowerLevel.ManyPower ? 'bg-rose-500' : 'bg-cyan-400'}`}
-                   style={{
-                     width: '100%',
-                     animation: `drain 1.5s linear forwards`
-                   }} 
-                 />
+              <div className="w-24 h-1 bg-slate-800/50 mt-2 rounded-full overflow-hidden backdrop-blur flex">
+                 <div className={`w-full flex ${hudSide === 'right' ? 'justify-end' : 'justify-start'}`}>
+                   <div 
+                     key={combo}
+                     className={`h-full ${currentLevel === PowerLevel.ManyPower ? 'bg-rose-500' : 'bg-cyan-400'}`}
+                     style={{
+                       width: '100%',
+                       animation: `drain 1.5s linear forwards`
+                     }} 
+                   />
+                 </div>
               </div>
             </div>
           </div>
