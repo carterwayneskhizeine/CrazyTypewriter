@@ -3,4 +3,8 @@ services:
     build: .
     ports:
       - "5111:80"
+    env_file:
+      - .env
+    environment:
+      - POST_HOST=${VITE_POST_HOST}
     restart: always

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal } from 'lucide-react';
+import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getCaretCoordinates } from './utils/caret';
 import { PowerConfig, Particle, PowerLevel } from './types';
@@ -59,6 +59,7 @@ export default function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('edit');
   const [copied, setCopied] = useState(false);
   const [themeMode, setThemeMode] = useState<ThemeMode>('terminal');
+  const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
   
   // Refs for engine
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -241,6 +242,34 @@ export default function App() {
     }
   };
 
+  const handleSend = async () => {
+    if (!text.trim()) return;
+
+    setSendStatus('sending');
+    try {
+      // Use relative path - nginx will proxy to https://envsVITE_POST_HOST/api/messages
+      const response = await fetch('/api/messages', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: text }),
+      });
+
+      if (response.ok) {
+        setSendStatus('success');
+        setTimeout(() => setSendStatus('idle'), 2000);
+      } else {
+        setSendStatus('error');
+        setTimeout(() => setSendStatus('idle'), 2000);
+      }
+    } catch (err) {
+      console.error('Failed to send:', err);
+      setSendStatus('error');
+      setTimeout(() => setSendStatus('idle'), 2000);
+    }
+  };
+
   // --- Render Helpers ---
 
   const getLevelLabel = () => {
@@ -355,6 +384,22 @@ export default function App() {
             <div className={`text-xs uppercase tracking-wider ${isTerminal ? 'text-terminal-dim' : 'text-[#858585]'}`}>MAX STREAK</div>
             <div className={`text-base ${isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}`}>{maxCombo}</div>
           </div>
+          <button
+            onClick={handleSend}
+            className={terminalBtnClass}
+            title={sendStatus === 'success' ? 'Sent!' : sendStatus === 'error' ? 'Failed!' : sendStatus === 'sending' ? 'Sending...' : 'Send'}
+            disabled={sendStatus === 'sending'}
+          >
+            {sendStatus === 'success' ? (
+              <CheckCircle2 className={`w-4 h-4 ${isTerminal ? 'text-terminal' : 'text-[#007acc]'}`} />
+            ) : sendStatus === 'error' ? (
+              <AlertCircle className="w-4 h-4 text-red-500" />
+            ) : sendStatus === 'sending' ? (
+              <Send className={`w-4 h-4 animate-pulse ${isTerminal ? 'text-terminal-dim' : 'text-[#858585]'}`} />
+            ) : (
+              <Send className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />
+            )}
+          </button>
           <button
             onClick={handleCopy}
             className={terminalBtnClass}

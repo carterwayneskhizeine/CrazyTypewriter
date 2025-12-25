@@ -12,6 +12,7 @@
 - **Theme System:** Two visual themes - Retro Terminal (green) and VS Code Modern (blue).
 - **Markdown Preview:** Toggle between edit and preview modes with markdown rendering.
 - **Copy to Clipboard:** One-click copy of editor content.
+- **Send to Server:** Send editor content to an external API server via nginx proxy.
 - **Responsive Design:** Mobile-friendly header with essential buttons only.
 
 ---
@@ -124,6 +125,14 @@ The app supports two visual themes that can be toggled via the header:
 - Visual feedback: Check icon appears for 2 seconds after successful copy
 - Theme-specific icon colors (terminal: white, VS Code: blue)
 
+### Send to Server
+- Send button in header (left of copy button)
+- Sends editor content to an external API server via POST request
+- Uses nginx proxy to avoid CORS issues - requests to `/api/messages` are proxied
+- API endpoint URL is configured via `VITE_POST_HOST` environment variable (see `.env.example`)
+- Visual feedback: Send icon (idle), pulsing (sending), checkmark (success), alert (error)
+- The proxy URL is NOT hardcoded in code - loaded from `.env` at container build time
+
 ### Responsive Design
 - **Desktop:** Full header with logo, title, subtitle, MAX STREAK counter, and all buttons
 - **Mobile:** Compact header showing only essential buttons (Copy, Preview, Theme, Settings)
@@ -142,6 +151,7 @@ The project is containerized using a multi-stage `Dockerfile`:
 ### 2. Nginx Configuration
 - **Path:** `nginx/default.conf`
 - **Logic:** Configured to handle Single Page Application (SPA) routing by using `try_files $uri $uri/ /index.html` to redirect all requests to `index.html`.
+- **API Proxy:** `/api/` requests are proxied to the external API server to avoid CORS issues. The target URL is set via `POST_HOST` environment variable from `.env`.
 - **Caching:** Basic cache-control headers are added for static assets.
 
 ### 3. Docker Compose
