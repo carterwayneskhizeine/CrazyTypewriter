@@ -344,7 +344,7 @@ export default function App() {
               POWER MODE TYPER v1.0
             </h1>
             <p className={`text-xs font-terminal ${isTerminal ? 'text-terminal-dim' : 'text-[#858585] font-mono'}`}>
-              {isTerminal ? '&gt; TYPE FAST TO INCREASE POWER' : 'Type fast to increase power'}
+              {isTerminal ? 'TYPE FAST TO INCREASE POWER' : 'Type fast to increase power'}
             </p>
           </div>
         </div>
@@ -426,25 +426,12 @@ export default function App() {
                    </div>
                    {currentLevel === PowerLevel.ManyPower && (
                       <span className={`text-xs font-terminal ${isTerminal ? 'text-terminal-dim' : 'text-[#858585]'}`}>
-                        {isTerminal ? '&lt;USE WITH CAUTION&gt;' : '<use with caution>'}
+                        {isTerminal ? 'USE WITH CAUTION' : '<use with caution>'}
                       </span>
                    )}
                 </div>
               )}
 
-              {/* Mini Progress Bar */}
-              <div className={`w-32 h-2 border mt-2 overflow-hidden ${isTerminal ? 'border-terminal-dim' : 'border-[#3c3c3c]'}`}>
-                 <div className={`w-full flex ${hudSide === 'right' ? 'justify-end' : 'justify-start'}`}>
-                   <div
-                     key={combo}
-                     className={`h-full ${isTerminal ? 'bg-terminal' : 'bg-[#007acc]'}`}
-                     style={{
-                       width: '100%',
-                       animation: `drain 1.5s linear forwards`
-                     }}
-                   />
-                 </div>
-              </div>
             </div>
           </div>
 
@@ -562,7 +549,7 @@ export default function App() {
 
             <div className={`pt-6 border-t-2 ${isTerminal ? 'border-terminal-dim' : 'border-[#3c3c3c]'}`}>
                <h3 className={`text-sm mb-2 ${isTerminal ? 'font-terminal text-terminal' : 'font-mono text-[#858585]'}`}>
-                 {isTerminal ? '&gt; THRESHOLDS:' : 'Thresholds:'}
+                 {isTerminal ? 'THRESHOLDS:' : 'Thresholds:'}
                </h3>
                <div className={`text-sm space-y-2 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
                  <div className="flex justify-between">

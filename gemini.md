@@ -9,6 +9,10 @@
 - **Combo System:** Tracks continuous typing streaks.
 - **Dynamic HUD:** A heads-up display showing the combo count that follows the cursor's vertical position and flips sides based on horizontal position.
 - **Configuration:** A settings panel to tweak physics, colors, and intensity.
+- **Theme System:** Two visual themes - Retro Terminal (green) and VS Code Modern (blue).
+- **Markdown Preview:** Toggle between edit and preview modes with markdown rendering.
+- **Copy to Clipboard:** One-click copy of editor content.
+- **Responsive Design:** Mobile-friendly header with essential buttons only.
 
 ---
 
@@ -62,20 +66,69 @@ The "Combo x" display floats near the text but avoids overlapping the current li
 ---
 
 ## Power Level System
-The visual intensity scales based on the `combo` count:
+The visual intensity scales based on `combo` count:
 
+**Terminal Theme (Green):**
 | Level | Threshold | Visuals |
 | :--- | :--- | :--- |
-| **None** | 0-9 | Gray/Slate UI. Minimal effects. |
-| **POWER** | 10-29 | **Cyan/Blue**. Light screen shake (`shake-level-1`). |
-| **SUPER POWER** | 30-59 | **Amber/Gold**. Moderate shake (`shake-level-2`). Increased particle count. |
-| **MANY POWER** | 60+ | **Red/Rose**. Intense shake (`shake-level-3`). Max particles. "Use with caution" warning. |
+| **None** | 0-9 | Dim Green. Minimal effects. |
+| **POWER** | 10-29 | Green shades. Light screen shake (`shake-level-1`). |
+| **SUPER POWER** | 30-59 | Bright Green/White-ish. Moderate shake (`shake-level-2`). |
+| **MANY POWER** | 60+ | Intense Green/White. Intense shake (`shake-level-3`). "Use with caution" warning. |
+
+**VS Code Theme (Blue):**
+| Level | Threshold | Visuals |
+| :--- | :--- | :--- |
+| **None** | 0-9 | Dim Gray. Minimal effects. |
+| **POWER** | 10-29 | Blue shades. Light screen shake. |
+| **SUPER POWER** | 30-59 | Bright Blue/White-ish. Moderate shake. |
+| **MANY POWER** | 60+ | Intense Blue/White. Intense shake. |
 
 ---
 
-## CSS & Animation Details
-- **Shake Effects:** Defined in `index.html` as `@keyframes shake-1`, `shake-2`, `shake-3`. Applied via conditional classes.
-- **Bar Drain:** The combo timer bar uses a CSS animation that resets (via React `key` prop) every time a key is pressed.
+## Theme System
+The app supports two visual themes that can be toggled via the header:
+
+1. **Retro Terminal Theme:**
+   - Colors: Green monochrome (#00ff00, #006600, etc.)
+   - Effects: CRT scanlines, screen curvature, flicker, text glow
+   - Font: System default with terminal styling
+   - UI Elements: ASCII borders, block cursor, retro buttons
+   - Scrollbar: Green styled with glow effects
+
+2. **VS Code Modern Theme:**
+   - Colors: VS Code dark theme (#1e1e1e, #252526, #007acc, #d4d4d4)
+   - Effects: Clean flat design, subtle shadows, rounded corners
+   - Font: Monospace with modern styling
+   - UI Elements: Thin cursor, rounded buttons, hover transitions
+   - Scrollbar: Modern dark gray with rounded thumb
+
+**Theme Implementation:**
+- `themeMode` state controls current theme (`'terminal' | 'vscode'`)
+- Theme-specific color arrays: `TERMINAL_LEVEL_COLORS` and `VSCODE_LEVEL_COLORS`
+- Helper function `getLevelColors(theme, level)` returns appropriate colors
+- All UI components use conditional classes based on `isTerminal` flag
+- Particle system dynamically switches color palettes based on theme
+
+---
+
+### Markdown Preview
+- Uses `react-markdown` library for rendering
+- Toggle between edit and preview modes via Eye/Edit icons
+- Theme-specific styling: `.markdown-preview` (terminal) and `.vscode-markdown-preview` (VS Code)
+- Supports headings, lists, code blocks, tables, blockquotes, links, etc.
+
+### Copy to Clipboard
+- One-click copy button in header (left of preview toggle)
+- Uses `navigator.clipboard.writeText(text)` API
+- Visual feedback: Check icon appears for 2 seconds after successful copy
+- Theme-specific icon colors (terminal: white, VS Code: blue)
+
+### Responsive Design
+- **Desktop:** Full header with logo, title, subtitle, MAX STREAK counter, and all buttons
+- **Mobile:** Compact header showing only essential buttons (Copy, Preview, Theme, Settings)
+- Hidden elements on mobile: Logo/title section, MAX STREAK counter
+- Header uses flexbox for responsive layout
 
 ---
 
