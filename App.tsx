@@ -310,8 +310,8 @@ export default function App() {
     : 'w-full h-[85vh] sm:max-w-[calc(100vw-160px)] sm:h-[calc(100vh-120px)] relative z-20';
 
   const mainClass = isTerminal
-    ? `flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative ${shakeClass}`
-    : `flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative ${shakeClass}`;
+    ? `flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative z-20 ${shakeClass}`
+    : `flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative z-20 ${shakeClass}`;
 
   const configSidebarClass = isTerminal
     ? `fixed inset-y-0 right-0 w-80 bg-terminal border-l-2 border-terminal shadow-lg transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`
