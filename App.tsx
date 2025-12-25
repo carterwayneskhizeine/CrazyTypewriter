@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings, Zap, Flame, Crown, RefreshCcw } from 'lucide-react';
+import { Settings, Zap, Flame, Crown, RefreshCcw, X } from 'lucide-react';
 import { getCaretCoordinates } from './utils/caret';
 import { PowerConfig, Particle, PowerLevel } from './types';
 
@@ -38,6 +38,7 @@ export default function App() {
   const [config, setConfig] = useState<PowerConfig>(DEFAULT_CONFIG);
   const [showConfig, setShowConfig] = useState(false);
   const [shakeClass, setShakeClass] = useState('');
+  const [caretY, setCaretY] = useState(0);
   
   // Refs for engine
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -169,6 +170,7 @@ export default function App() {
 
     // Reset Combo Timer
     if (comboTimeoutRef.current) clearTimeout(comboTimeoutRef.current);
+    // @ts-ignore - setTimeout returns number in browser
     comboTimeoutRef.current = setTimeout(() => {
       setCombo(0);
     }, 1500 + (combo * 10)); // Higher combo gives slightly longer grace period
@@ -180,6 +182,19 @@ export default function App() {
     const coords = getCaretCoordinates(target);
     const spawnX = coords.left;
     const spawnY = coords.top + config.spawnHeightOffset;
+
+    // Calculate HUD position (Relative to the text area container)
+    // coords.top is absolute page Y. We need Y relative to the container.
+    // The container is the relative parent. The textarea is inside it.
+    // We can assume the textarea top is roughly 0 relative to container, 
+    // but better to be precise using bounding rects.
+    const rect = target.getBoundingClientRect();
+    const relativeY = coords.top - (rect.top + window.scrollY);
+    
+    // Textarea has padding (p-8 = 2rem = 32px).
+    // The caret relativeY includes this padding.
+    // We'll set the caretY state to this value to position the HUD.
+    setCaretY(relativeY);
 
     // Trigger Effects
     spawnParticles(spawnX, spawnY, level);
@@ -243,48 +258,57 @@ export default function App() {
       {/* Main Content Area */}
       <main className={`flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative ${shakeClass}`}>
         
-        {/* Combo HUD */}
-        <div className={`
-          absolute top-8 left-1/2 -translate-x-1/2 z-40
-          transition-all duration-300 ease-out transform
-          ${combo > 0 ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-4 scale-90'}
-        `}>
-          <div className="flex flex-col items-center">
-            <div className="relative">
-              <span className={`font-black italic text-6xl sm:text-8xl font-mono ${getLevelColorClass()}`}>
-                {combo}x
-              </span>
-              {currentLevel >= PowerLevel.ManyPower && (
-                <Crown className="absolute -top-6 -right-6 w-8 h-8 text-yellow-400 animate-bounce" fill="currentColor" />
-              )}
-            </div>
-            {currentLevel > PowerLevel.None && (
-              <div className={`mt-2 font-black tracking-[0.2em] text-sm sm:text-lg animate-pulse ${getLevelColorClass()}`}>
-                {getLevelLabel()}
-                {currentLevel === PowerLevel.ManyPower && <span className="block text-[10px] opacity-70 font-normal tracking-normal text-center mt-1">(USE WITH CAUTION)</span>}
-              </div>
-            )}
-            
-            {/* Combo Timer Bar */}
-            <div className="w-full h-1 bg-slate-800 mt-2 rounded-full overflow-hidden">
-               <div 
-                 key={combo} // Reset animation on combo change
-                 className={`h-full ${currentLevel === PowerLevel.ManyPower ? 'bg-rose-500' : 'bg-cyan-400'}`}
-                 style={{
-                   width: '100%',
-                   animation: `drain 1.5s linear forwards`
-                 }} 
-               />
-               <style>{`
-                 @keyframes drain { from { width: 100%; } to { width: 0%; } }
-               `}</style>
-            </div>
-          </div>
-        </div>
-
-        {/* Text Editor */}
+        {/* Text Editor Wrapper */}
         <div className="w-full max-w-4xl h-[60vh] relative z-20">
           <div className="absolute inset-0 bg-gradient-to-tr from-slate-800/20 to-cyan-900/20 rounded-xl blur-xl transform scale-105 opacity-50" />
+          
+          {/* Dynamic Combo HUD - Moved inside and positioned by caretY */}
+          <div 
+            className={`
+              absolute right-8 z-40 pointer-events-none flex flex-col items-end justify-center
+              transition-all duration-75 ease-out
+              ${combo > 0 ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-4'}
+            `}
+            style={{ 
+              top: caretY,
+              transform: `translateY(-50%) ${combo === 0 ? 'translateX(1rem)' : 'translateX(0)'}` // Center vertically on line
+            }}
+          >
+            <div className="flex flex-col items-end">
+              <div className="relative flex items-center gap-2">
+                {currentLevel >= PowerLevel.ManyPower && (
+                  <Crown className="w-6 h-6 text-yellow-400 animate-bounce" fill="currentColor" />
+                )}
+                <span className={`font-black italic text-4xl sm:text-6xl font-mono leading-none ${getLevelColorClass()}`}>
+                  {combo}x
+                </span>
+              </div>
+              
+              {currentLevel > PowerLevel.None && (
+                <div className="mt-1 flex flex-col items-end">
+                   <div className={`font-black tracking-[0.2em] text-xs sm:text-sm animate-pulse ${getLevelColorClass()}`}>
+                    {getLevelLabel()}
+                   </div>
+                   {currentLevel === PowerLevel.ManyPower && (
+                      <span className="text-[10px] text-rose-400/70 font-bold">(USE WITH CAUTION)</span>
+                   )}
+                </div>
+              )}
+              
+              {/* Mini Progress Bar */}
+              <div className="w-24 h-1 bg-slate-800/50 mt-2 rounded-full overflow-hidden backdrop-blur">
+                 <div 
+                   key={combo}
+                   className={`h-full ${currentLevel === PowerLevel.ManyPower ? 'bg-rose-500' : 'bg-cyan-400'}`}
+                   style={{
+                     width: '100%',
+                     animation: `drain 1.5s linear forwards`
+                   }} 
+                 />
+              </div>
+            </div>
+          </div>
+
           <textarea
             ref={inputRef}
             value={text}
@@ -310,9 +334,17 @@ export default function App() {
             <h2 className="text-xl font-bold text-white flex items-center gap-2">
               <Settings className="w-5 h-5" /> Config
             </h2>
-            <button onClick={() => setConfig(DEFAULT_CONFIG)} className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
-              <RefreshCcw className="w-3 h-3" /> Reset
-            </button>
+            <div className="flex items-center gap-3">
+              <button onClick={() => setConfig(DEFAULT_CONFIG)} className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                <RefreshCcw className="w-3 h-3" /> Reset
+              </button>
+              <button 
+                onClick={() => setShowConfig(false)}
+                className="p-1 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
           </div>
 
           <div className="space-y-6">
