@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getCaretCoordinates } from './utils/caret';
 import { PowerConfig, Particle, PowerLevel } from './types';
@@ -370,7 +370,7 @@ export default function App() {
           </div>
           <div>
             <h1 className={`font-terminal text-lg tracking-tight ${isTerminal ? 'text-terminal crt-glow' : 'text-[#d4d4d4] font-mono'}`}>
-              POWER MODE TYPER v1.0
+              POWER
             </h1>
             <p className={`text-xs font-terminal ${isTerminal ? 'text-terminal-dim' : 'text-[#858585] font-mono'}`}>
               {isTerminal ? 'TYPE FAST TO INCREASE POWER' : 'Type fast to increase power'}
@@ -535,7 +535,7 @@ export default function App() {
             </div>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             <ControlGroup label="PARTICLES PER KEY" isTerminal={isTerminal}>
               <input
                 type="range" min="1" max="20" step="1"
@@ -543,7 +543,7 @@ export default function App() {
                 onChange={(e) => setConfig({...config, particleCount: Number(e.target.value)})}
                 className={rangeInputClass}
               />
-              <div className={`flex justify-between text-sm mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
+              <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
                 <span>[1]</span>
                 <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.particleCount}]</span>
                 <span>[20]</span>
@@ -557,7 +557,7 @@ export default function App() {
                 onChange={(e) => setConfig({...config, gravity: Number(e.target.value)})}
                 className={rangeInputClass}
               />
-              <div className={`flex justify-between text-sm mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
+              <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
                 <span>[ZERO]</span>
                 <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.gravity.toFixed(2)}]</span>
                 <span>[HEAVY]</span>
@@ -571,7 +571,7 @@ export default function App() {
                 onChange={(e) => setConfig({...config, velocity: Number(e.target.value)})}
                 className={rangeInputClass}
               />
-               <div className={`flex justify-between text-sm mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
+               <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
                 <span>[SLOW]</span>
                 <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.velocity}]</span>
                 <span>[FAST]</span>
@@ -585,18 +585,18 @@ export default function App() {
                 onChange={(e) => setConfig({...config, baseRadius: Number(e.target.value)})}
                 className={rangeInputClass}
               />
-              <div className={`flex justify-between text-sm mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
+              <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
                 <span>[SMALL]</span>
                 <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.baseRadius}]</span>
                 <span>[LARGE]</span>
               </div>
             </ControlGroup>
 
-            <div className={`pt-6 border-t-2 ${isTerminal ? 'border-terminal-dim' : 'border-[#3c3c3c]'}`}>
-               <h3 className={`text-sm mb-2 ${isTerminal ? 'font-terminal text-terminal' : 'font-mono text-[#858585]'}`}>
+            <div className={`pt-4 border-t-2 ${isTerminal ? 'border-terminal-dim' : 'border-[#3c3c3c]'}`}>
+               <h3 className={`text-xs mb-2 ${isTerminal ? 'font-terminal text-terminal' : 'font-mono text-[#858585]'}`}>
                  {isTerminal ? 'THRESHOLDS:' : 'Thresholds:'}
                </h3>
-               <div className={`text-sm space-y-2 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
+               <div className={`text-xs space-y-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
                  <div className="flex justify-between">
                    <span>POWER LEVEL</span>
                    <span className={isTerminal ? 'text-terminal' : 'text-[#d4d4d4]'}>[{COMBO_THRESHOLDS.POWER}]</span>
@@ -609,6 +609,19 @@ export default function App() {
                    <span>MANY POWER</span>
                    <span className={isTerminal ? 'text-white crt-glow' : 'text-[#007acc]'}>[{COMBO_THRESHOLDS.MANY}]</span>
                  </div>
+                 <a
+                   href="https://github.com/carterwayneskhizeine/CrazyTypewriter"
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   className={`flex items-center justify-center gap-2 mt-4 py-2 px-4 rounded transition-all duration-200 ${
+                     isTerminal
+                       ? 'border border-terminal text-terminal hover:bg-terminal hover:text-black'
+                       : 'border border-[#007acc] text-[#007acc] hover:bg-[#007acc] hover:text-white'
+                   }`}
+                 >
+                   <Github size={18} />
+                   <span>GitHub</span>
+                 </a>
                </div>
             </div>
           </div>
@@ -620,7 +633,7 @@ export default function App() {
 
 const ControlGroup: React.FC<{ label: string; children: React.ReactNode; isTerminal?: boolean }> = ({ label, children, isTerminal = true }) => (
   <div>
-    <label className={`block text-sm mb-3 ${isTerminal ? 'font-terminal text-terminal crt-glow-subtle tracking-wider' : 'font-mono text-[#d4d4d4] tracking-wider'}`}>
+    <label className={`block text-xs mb-2 ${isTerminal ? 'font-terminal text-terminal crt-glow-subtle tracking-wider' : 'font-mono text-[#d4d4d4] tracking-wider'}`}>
       {isTerminal ? `[${label}]` : `${label}`}
     </label>
     {children}
