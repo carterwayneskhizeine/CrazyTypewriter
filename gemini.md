@@ -21,6 +21,7 @@
   - UI Shake: CSS Keyframes.
   - Transitions: CSS Transitions.
 - **Build/Env:** Standard ES modules structure (no complex bundler config required for the logic, assumes environment handles TSX/TS).
+- **Deployment:** Docker, Nginx.
 
 ---
 
@@ -75,6 +76,26 @@ The visual intensity scales based on the `combo` count:
 ## CSS & Animation Details
 - **Shake Effects:** Defined in `index.html` as `@keyframes shake-1`, `shake-2`, `shake-3`. Applied via conditional classes.
 - **Bar Drain:** The combo timer bar uses a CSS animation that resets (via React `key` prop) every time a key is pressed.
+
+---
+
+## Infrastructure & Docker
+
+### 1. Docker Setup
+The project is containerized using a multi-stage `Dockerfile`:
+- **Stage 1 (Build):** Uses `node:20-alpine` to install dependencies and build the React app via Vite.
+- **Stage 2 (Serve):** Uses `nginx:alpine` to serve the static production build.
+
+### 2. Nginx Configuration
+- **Path:** `nginx/default.conf`
+- **Logic:** Configured to handle Single Page Application (SPA) routing by using `try_files $uri $uri/ /index.html` to redirect all requests to `index.html`.
+- **Caching:** Basic cache-control headers are added for static assets.
+
+### 3. Docker Compose
+- **File:** `docker-compose.yml`
+- **Service:** `app`
+- **Port Mapping:** Host port `5111` -> Container port `80`.
+- **Command:** `docker-compose up -d --build`
 
 ---
 
