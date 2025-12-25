@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit } from 'lucide-react';
+import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getCaretCoordinates } from './utils/caret';
 import { PowerConfig, Particle, PowerLevel } from './types';
@@ -33,6 +33,7 @@ const COMBO_THRESHOLDS = {
 const random = (min: number, max: number) => Math.random() * (max - min) + min;
 
 type ViewMode = 'edit' | 'preview';
+type ThemeMode = 'terminal' | 'vscode';
 
 export default function App() {
   const [text, setText] = useState<string>('Type here to unleash power...');
@@ -44,6 +45,7 @@ export default function App() {
   const [caretY, setCaretY] = useState(0);
   const [hudSide, setHudSide] = useState<'left' | 'right'>('right');
   const [viewMode, setViewMode] = useState<ViewMode>('edit');
+  const [copied, setCopied] = useState(false);
   
   // Refs for engine
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -216,6 +218,16 @@ export default function App() {
     triggerShake(level);
   };
 
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
   // --- Render Helpers ---
 
   const getLevelLabel = () => {
@@ -262,6 +274,13 @@ export default function App() {
             <div className="text-terminal-dim text-xs uppercase tracking-wider">MAX STREAK</div>
             <div className="text-base text-terminal crt-glow">{maxCombo}</div>
           </div>
+          <button
+            onClick={handleCopy}
+            className="terminal-btn p-1"
+            title={copied ? 'Copied!' : 'Copy'}
+          >
+            {copied ? <Check className="w-4 h-4 text-white" /> : <Copy className="w-4 h-4" />}
+          </button>
           <button
             onClick={() => setViewMode(viewMode === 'edit' ? 'preview' : 'edit')}
             className="terminal-btn p-1"
