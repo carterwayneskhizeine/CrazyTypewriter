@@ -5,10 +5,10 @@ import { PowerConfig, Particle, PowerLevel } from './types';
 
 // Default Configurations
 const DEFAULT_CONFIG: PowerConfig = {
-  gravity: 0.25,
-  particleCount: 8,
-  baseRadius: 3,
-  velocity: 4,
+  gravity: 0.8,
+  particleCount: 12,
+  baseRadius: 2,
+  velocity: 5,
   life: 50,
   shakeIntensity: 5,
   spawnHeightOffset: 5,
@@ -378,7 +378,7 @@ export default function App() {
 
             <ControlGroup label="Gravity">
               <input 
-                type="range" min="0" max="1" step="0.05" 
+                type="range" min="0" max="2" step="0.05" 
                 value={config.gravity} 
                 onChange={(e) => setConfig({...config, gravity: Number(e.target.value)})}
                 className="w-full accent-cyan-500"
@@ -405,12 +405,17 @@ export default function App() {
             </ControlGroup>
 
             <ControlGroup label="Particle Size">
-              <input 
-                type="range" min="1" max="10" step="0.5" 
-                value={config.baseRadius} 
+              <input
+                type="range" min="1" max="10" step="0.5"
+                value={config.baseRadius}
                 onChange={(e) => setConfig({...config, baseRadius: Number(e.target.value)})}
                 className="w-full accent-cyan-500"
               />
+              <div className="flex justify-between text-xs text-slate-400 mt-1">
+                <span>Small</span>
+                <span>{config.baseRadius}</span>
+                <span>Large</span>
+              </div>
             </ControlGroup>
 
             <div className="pt-6 border-t border-slate-800">
