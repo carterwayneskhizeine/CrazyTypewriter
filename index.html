@@ -5,18 +5,183 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Power Mode Typer</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'terminal-green': '#00ff00',
+              'terminal-green-dim': '#00cc00',
+              'terminal-dark': '#008800',
+              'terminal-black': '#050505',
+            }
+          }
+        }
+      }
+    </script>
     <style>
-      @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Inter:wght@400;600;800&display=swap');
-      
+      @import url('https://fonts.googleapis.com/css2?family=VT323&family=IBM+Plex+Mono:wght@400;600&display=swap');
+
+      /* Retro Terminal Base */
       body {
-        background-color: #0f172a;
-        color: #f8fafc;
-        font-family: 'Inter', sans-serif;
+        background-color: #000000;
+        color: #33ff33;
+        font-family: 'VT323', monospace;
         overflow-x: hidden;
       }
-      
+
       .font-mono {
-        font-family: 'JetBrains Mono', monospace;
+        font-family: 'IBM Plex Mono', monospace;
+      }
+
+      .font-terminal {
+        font-family: 'VT323', monospace;
+      }
+
+      /* CRT Screen Glow Effect */
+      .crt-glow {
+        text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00, 0 0 20px #00ff00;
+      }
+
+      .crt-glow-subtle {
+        text-shadow: 0 0 3px #00ff00, 0 0 6px #00ff00;
+      }
+
+      /* CRT Scanlines Effect */
+      .crt-scanlines::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 100;
+        background: repeating-linear-gradient(
+          0deg,
+          rgba(0, 0, 0, 0.15),
+          rgba(0, 0, 0, 0.15) 1px,
+          transparent 1px,
+          transparent 2px
+        );
+      }
+
+      /* CRT Screen Curvature Effect */
+      .crt-curvature {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 99;
+        background: radial-gradient(
+          ellipse at center,
+          transparent 0%,
+          transparent 70%,
+          rgba(0, 0, 0, 0.4) 100%
+        );
+      }
+
+      /* Screen Flicker Effect */
+      @keyframes flicker {
+        0% { opacity: 0.97; }
+        5% { opacity: 0.95; }
+        10% { opacity: 0.9; }
+        15% { opacity: 0.95; }
+        20% { opacity: 0.99; }
+        50% { opacity: 0.95; }
+        55% { opacity: 0.9; }
+        60% { opacity: 0.99; }
+        100% { opacity: 0.97; }
+      }
+
+      .crt-flicker {
+        animation: flicker 0.15s infinite;
+      }
+
+      /* Block Cursor for Textarea */
+      .block-cursor {
+        caret-color: transparent;
+      }
+
+      .block-cursor::selection {
+        background-color: #33ff33;
+        color: #000000;
+      }
+
+      /* ASCII Box Borders */
+      .ascii-box {
+        border: 2px solid #33ff33;
+        box-shadow: 0 0 10px #33ff33, inset 0 0 5px rgba(51, 255, 51, 0.1);
+      }
+
+      .ascii-box-dim {
+        border: 1px solid #008800;
+        box-shadow: 0 0 5px #008800;
+      }
+
+      /* Terminal Button Style */
+      .terminal-btn {
+        background: transparent;
+        border: 2px solid #33ff33;
+        color: #33ff33;
+        text-shadow: 0 0 5px #33ff33;
+        transition: all 0.15s ease;
+      }
+
+      .terminal-btn:hover {
+        background: #33ff33;
+        color: #000000;
+        text-shadow: none;
+        box-shadow: 0 0 20px #33ff33;
+      }
+
+      /* Terminal Input/Range Style */
+      .terminal-range {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 4px;
+        background: #008800;
+        outline: none;
+        box-shadow: 0 0 5px #00ff00;
+      }
+
+      .terminal-range::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 16px;
+        height: 16px;
+        background: #33ff33;
+        cursor: pointer;
+        box-shadow: 0 0 10px #33ff00, 0 0 20px #33ff00;
+      }
+
+      .terminal-range::-moz-range-thumb {
+        width: 16px;
+        height: 16px;
+        background: #33ff33;
+        cursor: pointer;
+        border: none;
+        box-shadow: 0 0 10px #33ff00, 0 0 20px #33ff00;
+      }
+
+      /* Override text colors for terminal theme */
+      .text-terminal {
+        color: #33ff33 !important;
+      }
+
+      .text-terminal-dim {
+        color: #00aa00 !important;
+      }
+
+      .bg-terminal {
+        background-color: #000000 !important;
+      }
+
+      .border-terminal {
+        border-color: #33ff33 !important;
       }
 
       /* Shake Animations */

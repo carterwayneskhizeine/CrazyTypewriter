@@ -14,12 +14,12 @@ const DEFAULT_CONFIG: PowerConfig = {
   spawnHeightOffset: 5,
 };
 
-// Colors for different levels
+// Colors for different levels - Terminal Green Theme
 const LEVEL_COLORS = {
-  [PowerLevel.None]: ['#94a3b8', '#cbd5e1'], // Grayish
-  [PowerLevel.Power]: ['#22d3ee', '#0ea5e9', '#38bdf8', '#bae6fd'], // Cyan/Blue
-  [PowerLevel.SuperPower]: ['#fbbf24', '#f59e0b', '#fcd34d', '#ffffff'], // Amber/Gold
-  [PowerLevel.ManyPower]: ['#ef4444', '#f472b6', '#fb7185', '#e11d48'], // Red/Rose/Pink
+  [PowerLevel.None]: ['#006600', '#008800'], // Dim Green
+  [PowerLevel.Power]: ['#00cc00', '#00dd00', '#00ff00', '#33ff33'], // Green shades
+  [PowerLevel.SuperPower]: ['#00ff00', '#33ff33', '#66ff66', '#aaffaa'], // Bright Green/White-ish
+  [PowerLevel.ManyPower]: ['#00ff00', '#33ff33', '#aaffaa', '#ffffff'], // Intense Green/White
 };
 
 const COMBO_THRESHOLDS = {
@@ -225,41 +225,42 @@ export default function App() {
 
   const getLevelColorClass = () => {
     switch (currentLevel) {
-      case PowerLevel.ManyPower: return 'text-rose-500 drop-shadow-[0_0_10px_rgba(244,63,94,0.8)]';
-      case PowerLevel.SuperPower: return 'text-amber-400 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]';
-      case PowerLevel.Power: return 'text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]';
-      default: return 'text-slate-400';
+      case PowerLevel.ManyPower: return 'crt-glow text-white';
+      case PowerLevel.SuperPower: return 'crt-glow text-[#aaffaa]';
+      case PowerLevel.Power: return 'crt-glow-subtle text-terminal';
+      default: return 'text-[#006600]';
     }
   };
 
   return (
-    <div className="relative min-h-screen bg-slate-900 overflow-hidden flex flex-col">
+    <div className="relative min-h-screen bg-terminal overflow-hidden flex flex-col crt-scanlines">
+      <div className="crt-curvature crt-flicker" />
       {/* Particle Canvas Overlay */}
-      <canvas 
-        ref={canvasRef} 
+      <canvas
+        ref={canvasRef}
         className="fixed top-0 left-0 pointer-events-none z-50 w-full h-full"
       />
 
       {/* Header */}
-      <header className="relative z-10 p-6 flex justify-between items-center border-b border-slate-800 bg-slate-900/80 backdrop-blur-md">
+      <header className="relative z-10 p-4 flex justify-between items-center border-b-2 border-terminal bg-terminal-black">
         <div className="flex items-center gap-3">
-          <div className={`p-2 rounded-lg bg-slate-800 border border-slate-700 ${currentLevel >= PowerLevel.ManyPower ? 'animate-pulse border-rose-500' : ''}`}>
-             {currentLevel >= PowerLevel.ManyPower ? <Flame className="w-6 h-6 text-rose-500" /> : <Zap className="w-6 h-6 text-cyan-400" />}
+          <div className={`p-2 border-2 ${currentLevel >= PowerLevel.ManyPower ? 'border-white animate-pulse' : 'border-terminal'}`}>
+             {currentLevel >= PowerLevel.ManyPower ? <Flame className="w-6 h-6 text-white crt-glow" /> : <Zap className="w-6 h-6 text-terminal crt-glow" />}
           </div>
           <div>
-            <h1 className="font-bold text-xl tracking-tight text-white">Power Mode Typer</h1>
-            <p className="text-xs text-slate-400">Type fast to increase your power level</p>
+            <h1 className="font-terminal text-2xl tracking-tight text-terminal crt-glow">POWER MODE TYPER v1.0</h1>
+            <p className="text-terminal-dim text-sm font-terminal">&gt; TYPE FAST TO INCREASE POWER</p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-4">
-          <div className="text-right hidden sm:block">
-            <div className="text-xs text-slate-400 uppercase font-bold tracking-wider">Max Streak</div>
-            <div className="font-mono text-xl text-slate-200">{maxCombo}</div>
+          <div className="text-right hidden sm:block font-terminal">
+            <div className="text-terminal-dim text-sm uppercase tracking-wider">MAX STREAK</div>
+            <div className="text-xl text-terminal crt-glow">{maxCombo}</div>
           </div>
-          <button 
+          <button
             onClick={() => setShowConfig(!showConfig)}
-            className="p-2 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white"
+            className="terminal-btn p-2"
           >
             <Settings className="w-6 h-6" />
           </button>
@@ -268,20 +269,20 @@ export default function App() {
 
       {/* Main Content Area */}
       <main className={`flex-1 flex flex-col items-center justify-center p-4 sm:p-8 relative ${shakeClass}`}>
-        
+
         {/* Text Editor Wrapper */}
         <div className="w-full max-w-4xl h-[60vh] relative z-20">
-          <div className="absolute inset-0 bg-gradient-to-tr from-slate-800/20 to-cyan-900/20 rounded-xl blur-xl transform scale-105 opacity-50" />
-          
+          <div className="absolute inset-0 bg-terminal/10 blur-xl transform scale-105 opacity-50" />
+
           {/* Dynamic Combo HUD */}
-          <div 
+          <div
             className={`
               absolute z-40 pointer-events-none flex flex-col justify-center
               transition-all duration-300 ease-out
               ${hudSide === 'right' ? 'right-8 items-end' : 'left-8 items-start'}
               ${combo > 0 ? 'opacity-100' : 'opacity-0'}
             `}
-            style={{ 
+            style={{
               top: caretY,
               transform: `translateY(-50%) translateX(${combo > 0 ? '0' : (hudSide === 'right' ? '2rem' : '-2rem')})`
             }}
@@ -289,72 +290,81 @@ export default function App() {
             <div className={`flex flex-col ${hudSide === 'right' ? 'items-end' : 'items-start'}`}>
               <div className={`relative flex items-center gap-2 ${hudSide === 'right' ? 'flex-row' : 'flex-row-reverse'}`}>
                 {currentLevel >= PowerLevel.ManyPower && (
-                  <Crown className="w-6 h-6 text-yellow-400 animate-bounce" fill="currentColor" />
+                  <span className="text-2xl animate-pulse">[**]</span>
                 )}
-                <span className={`font-black italic text-4xl sm:text-6xl font-mono leading-none ${getLevelColorClass()}`}>
+                <span className={`font-terminal text-5xl sm:text-7xl leading-none ${getLevelColorClass()}`}>
                   {combo}x
                 </span>
               </div>
-              
+
               {currentLevel > PowerLevel.None && (
                 <div className={`mt-1 flex flex-col ${hudSide === 'right' ? 'items-end' : 'items-start'}`}>
-                   <div className={`font-black tracking-[0.2em] text-xs sm:text-sm animate-pulse ${getLevelColorClass()}`}>
-                    {getLevelLabel()}
+                   <div className={`font-terminal tracking-[0.2em] text-sm animate-pulse ${getLevelColorClass()}`}>
+                    [{getLevelLabel()}]
                    </div>
                    {currentLevel === PowerLevel.ManyPower && (
-                      <span className="text-[10px] text-rose-400/70 font-bold">(USE WITH CAUTION)</span>
+                      <span className="text-xs text-terminal-dim font-terminal">&lt;USE WITH CAUTION&gt;</span>
                    )}
                 </div>
               )}
-              
+
               {/* Mini Progress Bar */}
-              <div className="w-24 h-1 bg-slate-800/50 mt-2 rounded-full overflow-hidden backdrop-blur flex">
+              <div className="w-32 h-2 border border-terminal-dim mt-2 overflow-hidden">
                  <div className={`w-full flex ${hudSide === 'right' ? 'justify-end' : 'justify-start'}`}>
-                   <div 
+                   <div
                      key={combo}
-                     className={`h-full ${currentLevel === PowerLevel.ManyPower ? 'bg-rose-500' : 'bg-cyan-400'}`}
+                     className="h-full bg-terminal"
                      style={{
                        width: '100%',
                        animation: `drain 1.5s linear forwards`
-                     }} 
+                     }}
                    />
                  </div>
               </div>
             </div>
           </div>
 
-          <textarea
-            ref={inputRef}
-            value={text}
-            onChange={handleInput}
-            spellCheck={false}
-            className="w-full h-full bg-slate-800/50 backdrop-blur border border-slate-700 rounded-xl p-8 
-                       text-lg sm:text-xl font-mono text-slate-100 placeholder-slate-500
-                       focus:outline-none focus:ring-2 focus:ring-cyan-500/50 focus:border-cyan-500/50
-                       resize-none shadow-2xl transition-all leading-relaxed"
-            placeholder="// Start typing here to charge your power..."
-          />
-          
-          <div className="absolute bottom-4 right-4 text-xs text-slate-500 font-mono pointer-events-none">
-            {text.length} chars
+          {/* ASCII Box Border */}
+          <div className="relative w-full h-full ascii-box bg-terminal-black">
+            {/* Corner ASCII */}
+            <div className="absolute -top-3 -left-3 text-terminal text-2xl font-terminal">+</div>
+            <div className="absolute -top-3 -right-3 text-terminal text-2xl font-terminal">+</div>
+            <div className="absolute -bottom-3 -left-3 text-terminal text-2xl font-terminal">+</div>
+            <div className="absolute -bottom-3 -right-3 text-terminal text-2xl font-terminal">+</div>
+
+            <textarea
+              ref={inputRef}
+              value={text}
+              onChange={handleInput}
+              spellCheck={false}
+              className="block-cursor w-full h-full bg-transparent border-0 p-8
+                         text-lg sm:text-xl font-terminal text-terminal
+                         focus:outline-none resize-none leading-relaxed
+                         selection:bg-terminal selection:text-black"
+              placeholder="// START TYPING TO CHARGE YOUR POWER..."
+            />
+
+            <div className="absolute bottom-4 right-4 text-sm text-terminal-dim font-terminal pointer-events-none">
+              [{text.length} CHARS]
+            </div>
           </div>
         </div>
       </main>
 
       {/* Configuration Sidebar */}
-      <div className={`fixed inset-y-0 right-0 w-80 bg-slate-900/95 backdrop-blur shadow-2xl border-l border-slate-800 transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`}>
+      <div className={`fixed inset-y-0 right-0 w-80 bg-terminal border-l-2 border-terminal shadow-lg transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`}>
         <div className="p-6 h-full overflow-y-auto">
-          <div className="flex justify-between items-center mb-8">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <Settings className="w-5 h-5" /> Config
+          <div className="flex justify-between items-center mb-8 border-b border-terminal-dim pb-4">
+            <h2 className="font-terminal text-xl text-terminal flex items-center gap-2 crt-glow">
+              [ CONFIG ]
             </h2>
             <div className="flex items-center gap-3">
-              <button onClick={() => setConfig(DEFAULT_CONFIG)} className="text-xs text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
-                <RefreshCcw className="w-3 h-3" /> Reset
+              <button onClick={() => setConfig(DEFAULT_CONFIG)} className="terminal-btn px-2 py-1 text-sm font-terminal">
+                <RefreshCcw className="w-4 h-4" />
               </button>
-              <button 
+              <button
                 onClick={() => setShowConfig(false)}
-                className="p-1 hover:bg-slate-800 rounded-full transition-colors text-slate-400 hover:text-white"
+                className="terminal-btn p-1"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -362,76 +372,76 @@ export default function App() {
           </div>
 
           <div className="space-y-6">
-            <ControlGroup label="Particles per keystroke">
-              <input 
-                type="range" min="1" max="20" step="1" 
-                value={config.particleCount} 
+            <ControlGroup label="PARTICLES PER KEY">
+              <input
+                type="range" min="1" max="20" step="1"
+                value={config.particleCount}
                 onChange={(e) => setConfig({...config, particleCount: Number(e.target.value)})}
-                className="w-full accent-cyan-500"
+                className="w-full terminal-range"
               />
-              <div className="flex justify-between text-xs text-slate-400 mt-1">
-                <span>1</span>
-                <span>{config.particleCount}</span>
-                <span>20</span>
+              <div className="flex justify-between text-terminal-dim text-sm font-terminal mt-1">
+                <span>[1]</span>
+                <span className="text-terminal crt-glow">[{config.particleCount}]</span>
+                <span>[20]</span>
               </div>
             </ControlGroup>
 
-            <ControlGroup label="Gravity">
-              <input 
-                type="range" min="0" max="2" step="0.05" 
-                value={config.gravity} 
+            <ControlGroup label="GRAVITY">
+              <input
+                type="range" min="0" max="2" step="0.05"
+                value={config.gravity}
                 onChange={(e) => setConfig({...config, gravity: Number(e.target.value)})}
-                className="w-full accent-cyan-500"
+                className="w-full terminal-range"
               />
-              <div className="flex justify-between text-xs text-slate-400 mt-1">
-                <span>Zero G</span>
-                <span>{config.gravity}</span>
-                <span>Heavy</span>
+              <div className="flex justify-between text-terminal-dim text-sm font-terminal mt-1">
+                <span>[ZERO]</span>
+                <span className="text-terminal crt-glow">[{config.gravity.toFixed(2)}]</span>
+                <span>[HEAVY]</span>
               </div>
             </ControlGroup>
 
-            <ControlGroup label="Velocity">
-              <input 
-                type="range" min="1" max="15" step="1" 
-                value={config.velocity} 
+            <ControlGroup label="VELOCITY">
+              <input
+                type="range" min="1" max="15" step="1"
+                value={config.velocity}
                 onChange={(e) => setConfig({...config, velocity: Number(e.target.value)})}
-                className="w-full accent-cyan-500"
+                className="w-full terminal-range"
               />
-               <div className="flex justify-between text-xs text-slate-400 mt-1">
-                <span>Slow</span>
-                <span>{config.velocity}</span>
-                <span>Fast</span>
+               <div className="flex justify-between text-terminal-dim text-sm font-terminal mt-1">
+                <span>[SLOW]</span>
+                <span className="text-terminal crt-glow">[{config.velocity}]</span>
+                <span>[FAST]</span>
               </div>
             </ControlGroup>
 
-            <ControlGroup label="Particle Size">
+            <ControlGroup label="PARTICLE SIZE">
               <input
                 type="range" min="1" max="10" step="0.5"
                 value={config.baseRadius}
                 onChange={(e) => setConfig({...config, baseRadius: Number(e.target.value)})}
-                className="w-full accent-cyan-500"
+                className="w-full terminal-range"
               />
-              <div className="flex justify-between text-xs text-slate-400 mt-1">
-                <span>Small</span>
-                <span>{config.baseRadius}</span>
-                <span>Large</span>
+              <div className="flex justify-between text-terminal-dim text-sm font-terminal mt-1">
+                <span>[SMALL]</span>
+                <span className="text-terminal crt-glow">[{config.baseRadius}]</span>
+                <span>[LARGE]</span>
               </div>
             </ControlGroup>
 
-            <div className="pt-6 border-t border-slate-800">
-               <h3 className="text-sm font-bold text-slate-300 mb-2">Thresolds</h3>
-               <div className="text-xs text-slate-400 space-y-2">
+            <div className="pt-6 border-t-2 border-terminal-dim">
+               <h3 className="font-terminal text-sm text-terminal mb-2">&gt; THRESHOLDS:</h3>
+               <div className="text-sm text-terminal-dim font-terminal space-y-2">
                  <div className="flex justify-between">
-                   <span>Power Level</span>
-                   <span className="text-cyan-400">{COMBO_THRESHOLDS.POWER} hits</span>
+                   <span>POWER LEVEL</span>
+                   <span className="text-terminal">[{COMBO_THRESHOLDS.POWER}]</span>
                  </div>
                  <div className="flex justify-between">
-                   <span>Super Power</span>
-                   <span className="text-amber-400">{COMBO_THRESHOLDS.SUPER} hits</span>
+                   <span>SUPER POWER</span>
+                   <span className="text-terminal crt-glow">[{COMBO_THRESHOLDS.SUPER}]</span>
                  </div>
                  <div className="flex justify-between">
-                   <span>Many Power</span>
-                   <span className="text-rose-500">{COMBO_THRESHOLDS.MANY} hits</span>
+                   <span>MANY POWER</span>
+                   <span className="text-white crt-glow">[{COMBO_THRESHOLDS.MANY}]</span>
                  </div>
                </div>
             </div>
@@ -444,7 +454,7 @@ export default function App() {
 
 const ControlGroup: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div>
-    <label className="block text-sm font-medium text-slate-300 mb-2">{label}</label>
+    <label className="block text-sm font-terminal text-terminal crt-glow-subtle mb-3 tracking-wider">[{label}]</label>
     {children}
   </div>
 );
