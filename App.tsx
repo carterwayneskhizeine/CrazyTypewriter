@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
+import remarkMermaid from 'remark-mermaid-plugin';
+import rehypeRaw from 'rehype-raw';
 import { getCaretCoordinates } from './utils/caret';
 import { PowerConfig, Particle, PowerLevel } from './types';
 
@@ -73,6 +75,35 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [themeMode, setThemeMode] = useState<ThemeMode>('terminal');
   const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+
+  // Initialize Mermaid after component mounts
+  useEffect(() => {
+    const initializeMermaid = async () => {
+      if (typeof window !== 'undefined' && window.mermaid) {
+        window.mermaid.initialize({
+          startOnLoad: false,
+          theme: themeMode === 'terminal' ? 'dark' : themeMode === 'vscode' ? 'dark' : 'default',
+          securityLevel: 'loose',
+          fontFamily: themeMode === 'terminal' ? 'monospace' : themeMode === 'vscode' ? 'Consolas, "Courier New", monospace' : 'system-ui, -apple-system, sans-serif'
+        });
+      }
+    };
+
+    initializeMermaid();
+  }, [themeMode]);
+
+  // Render Mermaid diagrams when text changes and in preview mode
+  useEffect(() => {
+    if (viewMode === 'preview' && typeof window !== 'undefined' && window.mermaid) {
+      // Wait for DOM to update before rendering Mermaid diagrams
+      setTimeout(() => {
+        window.mermaid.run({
+          querySelector: '.mermaid',
+          suppressErrors: true
+        }).catch(console.error);
+      }, 100);
+    }
+  }, [text, viewMode]);
   
   // Refs for engine
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -590,7 +621,7 @@ export default function App() {
               className={previewClass}
               style={{ display: viewMode === 'preview' ? 'block' : 'none' }}
             >
-              <ReactMarkdown>{text}</ReactMarkdown>
+              <ReactMarkdown remarkPlugins={[remarkMermaid]} rehypePlugins={[rehypeRaw]}>{text}</ReactMarkdown>
             </div>
 
             <div className={`absolute bottom-4 right-4 text-sm font-mono pointer-events-none ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#999999]'}`}>
