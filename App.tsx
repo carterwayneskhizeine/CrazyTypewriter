@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github } from 'lucide-react';
+import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import { getCaretCoordinates } from './utils/caret';
 import { PowerConfig, Particle, PowerLevel } from './types';
@@ -31,8 +31,21 @@ const VSCODE_LEVEL_COLORS = {
   [PowerLevel.ManyPower]: ['#3794ff', '#4fc3f7', '#81d4fa', '#ffffff'], // Intense Blue/White
 };
 
+// Colors for different levels - Modern Wild White Theme
+const MODERN_LEVEL_COLORS = {
+  [PowerLevel.None]: ['#cccccc', '#dddddd'], // Light Gray
+  [PowerLevel.Power]: ['#ff006e', '#00d9ff', '#ffea00', '#ff006e'], // Random Neon Pink/Cyan/Yellow
+  [PowerLevel.SuperPower]: ['#ff006e', '#00d9ff', '#ffea00', '#ff00ff', '#00ffff'], // More neon variety
+  [PowerLevel.ManyPower]: ['#ff006e', '#00d9ff', '#ffea00', '#ff00ff', '#00ffff', '#ffffff'], // Intense neon
+};
+
+// Random neon colors for Modern theme particles (used regardless of level)
+const MODERN_NEON_COLORS = ['#ff006e', '#00d9ff', '#ffea00', '#ff00ff', '#00ffff', '#ff6b00'];
+
 const getLevelColors = (theme: ThemeMode, level: PowerLevel): string[] => {
-  return theme === 'terminal' ? TERMINAL_LEVEL_COLORS[level] : VSCODE_LEVEL_COLORS[level];
+  if (theme === 'terminal') return TERMINAL_LEVEL_COLORS[level];
+  if (theme === 'vscode') return VSCODE_LEVEL_COLORS[level];
+  return MODERN_LEVEL_COLORS[level];
 };
 
 const COMBO_THRESHOLDS = {
@@ -45,7 +58,7 @@ const COMBO_THRESHOLDS = {
 const random = (min: number, max: number) => Math.random() * (max - min) + min;
 
 type ViewMode = 'edit' | 'preview';
-type ThemeMode = 'terminal' | 'vscode';
+type ThemeMode = 'terminal' | 'vscode' | 'modern';
 
 export default function App() {
   const [text, setText] = useState<string>('Type here to unleash power...');
@@ -82,7 +95,7 @@ export default function App() {
 
   const spawnParticles = (x: number, y: number, level: PowerLevel) => {
     if (!canvasRef.current) return;
-    
+
     // Scale quantity based on level
     let count = config.particleCount;
     if (level === PowerLevel.SuperPower) count *= 1.5;
@@ -93,19 +106,24 @@ export default function App() {
     for (let i = 0; i < count; i++) {
       const angle = random(0, Math.PI * 2);
       const velocity = random(config.velocity * 0.5, config.velocity * (level >= PowerLevel.ManyPower ? 2 : 1.2));
-      
+
+      // For modern theme, use random neon colors regardless of level
+      const particleColor = themeMode === 'modern'
+        ? MODERN_NEON_COLORS[Math.floor(random(0, MODERN_NEON_COLORS.length))]
+        : colors[Math.floor(random(0, colors.length))];
+
       const particle: Particle = {
         x,
         y,
         vx: Math.cos(angle) * velocity,
         vy: Math.sin(angle) * velocity,
         alpha: 1,
-        color: colors[Math.floor(random(0, colors.length))],
+        color: particleColor,
         size: random(config.baseRadius, config.baseRadius * (level >= PowerLevel.ManyPower ? 2.5 : 1.5)),
         life: config.life,
         maxLife: config.life
       };
-      
+
       particlesRef.current.push(particle);
     }
   };
@@ -289,64 +307,116 @@ export default function App() {
         case PowerLevel.Power: return 'crt-glow-subtle text-terminal';
         default: return 'text-[#006600]';
       }
-    } else {
+    } else if (isVSCode) {
       switch (currentLevel) {
         case PowerLevel.ManyPower: return 'text-white';
         case PowerLevel.SuperPower: return 'text-[#4fc3f7]';
         case PowerLevel.Power: return 'text-[#007acc]';
         default: return 'text-[#555555]';
       }
+    } else {
+      // Modern theme
+      switch (currentLevel) {
+        case PowerLevel.ManyPower: return 'text-[#ff006e] font-bold neon-pulse';
+        case PowerLevel.SuperPower: return 'text-[#00d9ff] font-semibold';
+        case PowerLevel.Power: return 'text-[#ffea00] font-medium';
+        default: return 'text-[#cccccc]';
+      }
     }
   };
 
   // Theme-based color helpers
-  const getPrimaryColor = () => themeMode === 'terminal' ? '#33ff33' : '#d4d4d4';
-  const getSecondaryColor = () => themeMode === 'terminal' ? '#008800' : '#858585';
-  const getAccentColor = () => themeMode === 'terminal' ? '#00ff00' : '#007acc';
-  const getBgColor = () => themeMode === 'terminal' ? '#000000' : '#1e1e1e';
-  const getBorderColor = () => themeMode === 'terminal' ? '#33ff33' : '#3c3c3c';
-  const getHeaderBgColor = () => themeMode === 'terminal' ? '#050505' : '#252526';
+  const getPrimaryColor = () => {
+    if (themeMode === 'terminal') return '#33ff33';
+    if (themeMode === 'vscode') return '#d4d4d4';
+    return '#1a1a1a'; // Modern - dark gray-black
+  };
+  const getSecondaryColor = () => {
+    if (themeMode === 'terminal') return '#008800';
+    if (themeMode === 'vscode') return '#858585';
+    return '#666666'; // Modern - medium gray
+  };
+  const getAccentColor = () => {
+    if (themeMode === 'terminal') return '#00ff00';
+    if (themeMode === 'vscode') return '#007acc';
+    return '#ff006e'; // Modern - neon pink
+  };
+  const getBgColor = () => {
+    if (themeMode === 'terminal') return '#000000';
+    if (themeMode === 'vscode') return '#1e1e1e';
+    return '#ffffff'; // Modern - pure white
+  };
+  const getBorderColor = () => {
+    if (themeMode === 'terminal') return '#33ff33';
+    if (themeMode === 'vscode') return '#3c3c3c';
+    return '#e0e0e0'; // Modern - light gray border
+  };
+  const getHeaderBgColor = () => {
+    if (themeMode === 'terminal') return '#050505';
+    if (themeMode === 'vscode') return '#252526';
+    return '#fafafa'; // Modern - off-white header
+  };
 
   // Theme-based class helpers
   const isTerminal = themeMode === 'terminal';
-  const bodyContainerClass = isTerminal
-    ? 'min-h-screen bg-terminal overflow-hidden flex flex-col crt-scanlines'
-    : 'min-h-screen bg-[#1e1e1e] overflow-hidden flex flex-col';
+  const isVSCode = themeMode === 'vscode';
+  const isModern = themeMode === 'modern';
+
+  const bodyContainerClass = (() => {
+    if (isTerminal) return 'min-h-screen bg-terminal overflow-hidden flex flex-col crt-scanlines';
+    if (isVSCode) return 'min-h-screen bg-[#1e1e1e] overflow-hidden flex flex-col';
+    return 'min-h-screen bg-[#ffffff] overflow-hidden flex flex-col modern-pattern';
+  })();
 
   const curvatureFlickerClass = isTerminal ? 'crt-curvature crt-flicker' : '';
-  const headerClass = isTerminal
-    ? 'relative z-10 flex p-2 justify-between items-center border-b-2 border-terminal bg-terminal-black'
-    : 'relative z-10 flex px-3 py-2 justify-between items-center border-b border-[#3c3c3c] bg-[#252526]';
+  const headerClass = (() => {
+    if (isTerminal) return 'relative z-10 flex p-2 justify-between items-center border-b-2 border-terminal bg-terminal-black';
+    if (isVSCode) return 'relative z-10 flex px-3 py-2 justify-between items-center border-b border-[#3c3c3c] bg-[#252526]';
+    return 'relative z-10 flex px-4 py-3 justify-between items-center border-b border-[#e0e0e0] bg-[#fafafa] shadow-sm';
+  })();
 
-  const terminalBtnClass = isTerminal
-    ? 'terminal-btn p-1'
-    : 'vscode-btn p-1.5';
+  const themeBtnClass = (() => {
+    if (isTerminal) return 'terminal-btn p-1';
+    if (isVSCode) return 'vscode-btn p-1.5';
+    return 'modern-btn p-2';
+  })();
 
-  const asciiBoxClass = isTerminal
-    ? 'relative w-full h-full ascii-box bg-terminal-black'
-    : 'relative w-full h-full vscode-box bg-[#1e1e1e]';
+  const asciiBoxClass = (() => {
+    if (isTerminal) return 'relative w-full h-full ascii-box bg-terminal-black';
+    if (isVSCode) return 'relative w-full h-full vscode-box bg-[#1e1e1e]';
+    return 'relative w-full h-full modern-box bg-[#ffffff]';
+  })();
 
-  const textareaClass = isTerminal
-    ? 'block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-terminal text-terminal focus:outline-none resize-none leading-relaxed selection:bg-terminal selection:text-black'
-    : 'vscode-cursor vscode-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-mono text-[#d4d4d4] focus:outline-none resize-none leading-relaxed selection:bg-[#007acc] selection:text-white rounded-md';
+  const textareaClass = (() => {
+    if (isTerminal) return 'block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-terminal text-terminal focus:outline-none resize-none leading-relaxed selection:bg-terminal selection:text-black';
+    if (isVSCode) return 'vscode-cursor vscode-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-mono text-[#d4d4d4] focus:outline-none resize-none leading-relaxed selection:bg-[#007acc] selection:text-white rounded-md';
+    return 'modern-cursor modern-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-sans text-[#1a1a1a] focus:outline-none resize-none leading-relaxed selection:bg-[#ff006e] selection:text-white rounded-lg';
+  })();
 
-  const previewClass = isTerminal
-    ? 'terminal-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-terminal text-terminal leading-relaxed markdown-preview'
-    : 'vscode-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-mono text-[#d4d4d4] leading-relaxed vscode-markdown-preview';
+  const previewClass = (() => {
+    if (isTerminal) return 'terminal-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-terminal text-terminal leading-relaxed markdown-preview';
+    if (isVSCode) return 'vscode-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-mono text-[#d4d4d4] leading-relaxed vscode-markdown-preview';
+    return 'modern-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-sans text-[#1a1a1a] leading-relaxed modern-markdown-preview';
+  })();
 
-  const editorWrapperClass = isTerminal
-    ? 'w-full h-[85vh] sm:max-w-[calc(100vw-160px)] sm:h-[calc(100vh-120px)] relative z-20'
-    : 'w-full h-[85vh] sm:max-w-[calc(100vw-160px)] sm:h-[calc(100vh-120px)] relative z-20';
+  const editorWrapperClass = (() => {
+    const baseClass = 'w-full h-[85vh] sm:max-w-[calc(100vw-160px)] sm:h-[calc(100vh-120px)] relative z-20';
+    return baseClass;
+  })();
 
-  const mainClass = isTerminal
-    ? `flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative z-20 ${shakeClass}`
-    : `flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative z-20 ${shakeClass}`;
+  const mainClass = `flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative z-20 ${shakeClass}`;
 
-  const configSidebarClass = isTerminal
-    ? `fixed inset-y-0 right-0 w-80 bg-terminal border-l-2 border-terminal shadow-lg transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`
-    : `fixed inset-y-0 right-0 w-80 bg-[#252526] border-l border-[#3c3c3c] shadow-2xl transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`;
+  const configSidebarClass = (() => {
+    if (isTerminal) return `fixed inset-y-0 right-0 w-80 bg-terminal border-l-2 border-terminal shadow-lg transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`;
+    if (isVSCode) return `fixed inset-y-0 right-0 w-80 bg-[#252526] border-l border-[#3c3c3c] shadow-2xl transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`;
+    return `fixed inset-y-0 right-0 w-80 bg-[#ffffff] border-l border-[#e0e0e0] shadow-2xl transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`;
+  })();
 
-  const rangeInputClass = isTerminal ? 'w-full terminal-range' : 'w-full vscode-range';
+  const rangeInputClass = (() => {
+    if (isTerminal) return 'w-full terminal-range';
+    if (isVSCode) return 'w-full vscode-range';
+    return 'w-full modern-range';
+  })();
 
   return (
     <div className={bodyContainerClass}>
@@ -360,75 +430,89 @@ export default function App() {
       {/* Header - Show buttons on mobile, full header on desktop */}
       <header className={headerClass}>
         <div className="flex items-center gap-2 hidden sm:flex">
-          <div className={`p-1 border-2 ${isTerminal
-            ? (currentLevel >= PowerLevel.ManyPower ? 'border-white animate-pulse' : 'border-terminal')
-            : 'border-[#3c3c3c] rounded'}`}>
+          <div className={`p-1 border-2 ${(() => {
+            if (isTerminal) return currentLevel >= PowerLevel.ManyPower ? 'border-white animate-pulse' : 'border-terminal';
+            if (isVSCode) return 'border-[#3c3c3c] rounded';
+            return 'border-[#ff006e] rounded-lg';
+          })()}`}>
              {currentLevel >= PowerLevel.ManyPower
-              ? <Flame className={`w-4 h-4 ${isTerminal ? 'text-white crt-glow' : 'text-white'}`} />
-              : <Zap className={`w-4 h-4 ${isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}`} />
+              ? <Flame className={`w-4 h-4 ${isTerminal ? 'text-white crt-glow' : isVSCode ? 'text-white' : 'text-[#ff006e]'}`} />
+              : <Zap className={`w-4 h-4 ${isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ff006e]'}`} />
              }
           </div>
           <div>
-            <h1 className={`font-terminal text-lg tracking-tight ${isTerminal ? 'text-terminal crt-glow' : 'text-[#d4d4d4] font-mono'}`}>
+            <h1 className={`font-terminal text-lg tracking-tight ${(() => {
+              if (isTerminal) return 'text-terminal crt-glow';
+              if (isVSCode) return 'text-[#d4d4d4] font-mono';
+              return 'text-[#1a1a1a] font-sans font-bold';
+            })()}`}>
               POWER
             </h1>
-            <p className={`text-xs font-terminal ${isTerminal ? 'text-terminal-dim' : 'text-[#858585] font-mono'}`}>
-              {isTerminal ? 'TYPE FAST TO INCREASE POWER' : 'Type fast to increase power'}
+            <p className={`text-xs font-terminal ${(() => {
+              if (isTerminal) return 'text-terminal-dim';
+              if (isVSCode) return 'text-[#858585] font-mono';
+              return 'text-[#666666] font-sans';
+            })()}`}>
+              {isTerminal ? 'TYPE FAST TO INCREASE POWER' : isVSCode ? 'Type fast to increase power' : 'Type fast to increase power'}
             </p>
           </div>
         </div>
 
         {/* Buttons - Show on both mobile and desktop */}
         <div className="flex items-center gap-2">
-          <div className={`text-right hidden sm:block ${isTerminal ? 'font-terminal' : 'font-mono'}`}>
-            <div className={`text-xs uppercase tracking-wider ${isTerminal ? 'text-terminal-dim' : 'text-[#858585]'}`}>MAX STREAK</div>
-            <div className={`text-base ${isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}`}>{maxCombo}</div>
+          <div className={`text-right hidden sm:block ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'}`}>
+            <div className={`text-xs uppercase tracking-wider ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`}>MAX STREAK</div>
+            <div className={`text-base ${isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ff006e] font-bold'}`}>{maxCombo}</div>
           </div>
           <button
             onClick={handleSend}
-            className={terminalBtnClass}
+            className={themeBtnClass}
             title={sendStatus === 'success' ? 'Sent!' : sendStatus === 'error' ? 'Failed!' : sendStatus === 'sending' ? 'Sending...' : 'Send'}
             disabled={sendStatus === 'sending'}
           >
             {sendStatus === 'success' ? (
-              <CheckCircle2 className={`w-4 h-4 ${isTerminal ? 'text-terminal' : 'text-[#007acc]'}`} />
+              <CheckCircle2 className={`w-4 h-4 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#007acc]' : 'text-[#00d9ff]'}`} />
             ) : sendStatus === 'error' ? (
               <AlertCircle className="w-4 h-4 text-red-500" />
             ) : sendStatus === 'sending' ? (
-              <Send className={`w-4 h-4 animate-pulse ${isTerminal ? 'text-terminal-dim' : 'text-[#858585]'}`} />
+              <Send className={`w-4 h-4 animate-pulse ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
             ) : (
-              <Send className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />
+              <Send className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
             )}
           </button>
           <button
             onClick={handleCopy}
-            className={terminalBtnClass}
+            className={themeBtnClass}
             title={copied ? 'Copied!' : 'Copy'}
           >
-            {copied ? <Check className={`w-4 h-4 ${isTerminal ? 'text-white' : 'text-[#007acc]'}`} /> : <Copy className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />}
+            {copied ? <Check className={`w-4 h-4 ${isTerminal ? 'text-white' : isVSCode ? 'text-[#007acc]' : 'text-[#00d9ff]'}`} /> : <Copy className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />}
           </button>
           <button
             onClick={() => setViewMode(viewMode === 'edit' ? 'preview' : 'edit')}
-            className={terminalBtnClass}
+            className={themeBtnClass}
             title={viewMode === 'edit' ? 'Preview' : 'Edit'}
           >
             {viewMode === 'edit'
-              ? <Eye className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />
-              : <Edit className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />
+              ? <Eye className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+              : <Edit className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
             }
           </button>
           <button
-            onClick={() => setThemeMode(themeMode === 'terminal' ? 'vscode' : 'terminal')}
-            className={terminalBtnClass}
-            title={`Switch to ${themeMode === 'terminal' ? 'VS Code Theme' : 'Terminal Theme'}`}
+            onClick={() => {
+              if (themeMode === 'terminal') setThemeMode('vscode');
+              else if (themeMode === 'vscode') setThemeMode('modern');
+              else setThemeMode('terminal');
+            }}
+            className={themeBtnClass}
+            title={`Switch to ${themeMode === 'terminal' ? 'VS Code Theme' : themeMode === 'vscode' ? 'Modern Theme' : 'Terminal Theme'}`}
           >
-            {themeMode === 'terminal' ? <Monitor className="w-4 h-4" /> : <Terminal className="w-4 h-4" />}
+            {themeMode === 'terminal' ? <Monitor className="w-4 h-4" /> : themeMode === 'vscode' ? <Sun className="w-4 h-4" /> : <Terminal className="w-4 h-4" />}
           </button>
           <button
             onClick={() => setShowConfig(!showConfig)}
-            className={terminalBtnClass}
+            className={themeBtnClass}
           >
-            <Settings className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />
+            <Settings className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
           </button>
         </div>
       </header>
@@ -438,8 +522,9 @@ export default function App() {
 
         {/* Text Editor Wrapper */}
         <div className={editorWrapperClass}>
-          {!isTerminal && <div className="absolute inset-0 bg-[#007acc]/5 blur-xl transform scale-105 opacity-30" />}
           {isTerminal && <div className="absolute inset-0 bg-terminal/10 blur-xl transform scale-105 opacity-50" />}
+          {isVSCode && <div className="absolute inset-0 bg-[#007acc]/5 blur-xl transform scale-105 opacity-30" />}
+          {isModern && <div className="absolute inset-0 bg-[#ff006e]/5 blur-xl transform scale-105 opacity-20" />}
 
           {/* Dynamic Combo HUD */}
           <div
@@ -470,8 +555,8 @@ export default function App() {
                     [{getLevelLabel()}]
                    </div>
                    {currentLevel === PowerLevel.ManyPower && (
-                      <span className={`text-xs font-terminal ${isTerminal ? 'text-terminal-dim' : 'text-[#858585]'}`}>
-                        {isTerminal ? 'USE WITH CAUTION' : '<use with caution>'}
+                      <span className={`text-xs font-terminal ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`}>
+                        {isTerminal ? 'USE WITH CAUTION' : isVSCode ? '<use with caution>' : '⚠ use with caution'}
                       </span>
                    )}
                 </div>
@@ -498,7 +583,7 @@ export default function App() {
               onChange={handleInput}
               spellCheck={false}
               className={textareaClass}
-              placeholder={isTerminal ? "// START TYPING TO CHARGE YOUR POWER..." : "// Start typing to charge your power..."}
+              placeholder={isTerminal ? "// START TYPING TO CHARGE YOUR POWER..." : isVSCode ? "// Start typing to charge your power..." : "// Start typing to unleash your power..."}
               style={{ display: viewMode === 'edit' ? 'block' : 'none' }}
             />
             <div
@@ -508,7 +593,7 @@ export default function App() {
               <ReactMarkdown>{text}</ReactMarkdown>
             </div>
 
-            <div className={`absolute bottom-4 right-4 text-sm font-mono pointer-events-none ${isTerminal ? 'text-terminal-dim' : 'text-[#858585]'}`}>
+            <div className={`absolute bottom-4 right-4 text-sm font-mono pointer-events-none ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#999999]'}`}>
               [{text.length} CHARS]
             </div>
           </div>
@@ -518,96 +603,100 @@ export default function App() {
       {/* Configuration Sidebar */}
       <div className={configSidebarClass}>
         <div className="p-6 h-full overflow-y-auto">
-          <div className={`flex justify-between items-center mb-8 border-b ${isTerminal ? 'border-terminal-dim' : 'border-[#3c3c3c]'} pb-4`}>
-            <h2 className={`text-xl flex items-center gap-2 ${isTerminal ? 'font-terminal text-terminal crt-glow' : 'font-mono text-[#d4d4d4]'}`}>
-              {isTerminal ? '[ CONFIG ]' : 'Config'}
+          <div className={`flex justify-between items-center mb-8 border-b ${isTerminal ? 'border-terminal-dim' : isVSCode ? 'border-[#3c3c3c]' : 'border-[#e0e0e0]'} pb-4`}>
+            <h2 className={`text-xl flex items-center gap-2 ${(() => {
+              if (isTerminal) return 'font-terminal text-terminal crt-glow';
+              if (isVSCode) return 'font-mono text-[#d4d4d4]';
+              return 'font-sans text-[#1a1a1a] font-bold';
+            })()}`}>
+              {isTerminal ? '[ CONFIG ]' : isVSCode ? 'Config' : 'Config'}
             </h2>
             <div className="flex items-center gap-3">
-              <button onClick={() => setConfig(DEFAULT_CONFIG)} className={terminalBtnClass}>
-                <RefreshCcw className={`w-4 h-4 ${isTerminal ? '' : 'text-[#858585]'}`} />
+              <button onClick={() => setConfig(DEFAULT_CONFIG)} className={themeBtnClass}>
+                <RefreshCcw className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
               </button>
               <button
                 onClick={() => setShowConfig(false)}
-                className={terminalBtnClass}
+                className={themeBtnClass}
               >
-                <X className={`w-5 h-5 ${isTerminal ? '' : 'text-[#858585]'}`} />
+                <X className={`w-5 h-5 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
               </button>
             </div>
           </div>
 
           <div className="space-y-4">
-            <ControlGroup label="PARTICLES PER KEY" isTerminal={isTerminal}>
+            <ControlGroup label="PARTICLES PER KEY" themeMode={themeMode}>
               <input
                 type="range" min="1" max="20" step="1"
                 value={config.particleCount}
                 onChange={(e) => setConfig({...config, particleCount: Number(e.target.value)})}
                 className={rangeInputClass}
               />
-              <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
+              <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : isVSCode ? 'text-[#858585] font-mono' : 'text-[#999999] font-sans'}`}>
                 <span>[1]</span>
-                <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.particleCount}]</span>
+                <span className={isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ff006e] font-bold'}>[{config.particleCount}]</span>
                 <span>[20]</span>
               </div>
             </ControlGroup>
 
-            <ControlGroup label="GRAVITY" isTerminal={isTerminal}>
+            <ControlGroup label="GRAVITY" themeMode={themeMode}>
               <input
                 type="range" min="0" max="2" step="0.05"
                 value={config.gravity}
                 onChange={(e) => setConfig({...config, gravity: Number(e.target.value)})}
                 className={rangeInputClass}
               />
-              <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
+              <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : isVSCode ? 'text-[#858585] font-mono' : 'text-[#999999] font-sans'}`}>
                 <span>[ZERO]</span>
-                <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.gravity.toFixed(2)}]</span>
+                <span className={isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ff006e] font-bold'}>[{config.gravity.toFixed(2)}]</span>
                 <span>[HEAVY]</span>
               </div>
             </ControlGroup>
 
-            <ControlGroup label="VELOCITY" isTerminal={isTerminal}>
+            <ControlGroup label="VELOCITY" themeMode={themeMode}>
               <input
                 type="range" min="1" max="15" step="1"
                 value={config.velocity}
                 onChange={(e) => setConfig({...config, velocity: Number(e.target.value)})}
                 className={rangeInputClass}
               />
-               <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
+               <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : isVSCode ? 'text-[#858585] font-mono' : 'text-[#999999] font-sans'}`}>
                 <span>[SLOW]</span>
-                <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.velocity}]</span>
+                <span className={isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ff006e] font-bold'}>[{config.velocity}]</span>
                 <span>[FAST]</span>
               </div>
             </ControlGroup>
 
-            <ControlGroup label="PARTICLE SIZE" isTerminal={isTerminal}>
+            <ControlGroup label="PARTICLE SIZE" themeMode={themeMode}>
               <input
                 type="range" min="1" max="10" step="0.5"
                 value={config.baseRadius}
                 onChange={(e) => setConfig({...config, baseRadius: Number(e.target.value)})}
                 className={rangeInputClass}
               />
-              <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
+              <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : isVSCode ? 'text-[#858585] font-mono' : 'text-[#999999] font-sans'}`}>
                 <span>[SMALL]</span>
-                <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{config.baseRadius}]</span>
+                <span className={isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ff006e] font-bold'}>[{config.baseRadius}]</span>
                 <span>[LARGE]</span>
               </div>
             </ControlGroup>
 
-            <div className={`pt-4 border-t-2 ${isTerminal ? 'border-terminal-dim' : 'border-[#3c3c3c]'}`}>
-               <h3 className={`text-xs mb-2 ${isTerminal ? 'font-terminal text-terminal' : 'font-mono text-[#858585]'}`}>
+            <div className={`pt-4 border-t-2 ${isTerminal ? 'border-terminal-dim' : isVSCode ? 'border-[#3c3c3c]' : 'border-[#e0e0e0]'}`}>
+               <h3 className={`text-xs mb-2 ${isTerminal ? 'font-terminal text-terminal' : isVSCode ? 'font-mono text-[#858585]' : 'font-sans text-[#666666]'}`}>
                  {isTerminal ? 'THRESHOLDS:' : 'Thresholds:'}
                </h3>
-               <div className={`text-xs space-y-1 ${isTerminal ? 'text-terminal-dim font-terminal' : 'text-[#858585] font-mono'}`}>
+               <div className={`text-xs space-y-1 ${isTerminal ? 'text-terminal-dim font-terminal' : isVSCode ? 'text-[#858585] font-mono' : 'text-[#999999] font-sans'}`}>
                  <div className="flex justify-between">
                    <span>POWER LEVEL</span>
-                   <span className={isTerminal ? 'text-terminal' : 'text-[#d4d4d4]'}>[{COMBO_THRESHOLDS.POWER}]</span>
+                   <span className={isTerminal ? 'text-terminal' : isVSCode ? 'text-[#d4d4d4]' : 'text-[#1a1a1a]'}>[{COMBO_THRESHOLDS.POWER}]</span>
                  </div>
                  <div className="flex justify-between">
                    <span>SUPER POWER</span>
-                   <span className={isTerminal ? 'text-terminal crt-glow' : 'text-[#007acc]'}>[{COMBO_THRESHOLDS.SUPER}]</span>
+                   <span className={isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#00d9ff] font-semibold'}>[{COMBO_THRESHOLDS.SUPER}]</span>
                  </div>
                  <div className="flex justify-between">
                    <span>MANY POWER</span>
-                   <span className={isTerminal ? 'text-white crt-glow' : 'text-[#007acc]'}>[{COMBO_THRESHOLDS.MANY}]</span>
+                   <span className={isTerminal ? 'text-white crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ff006e] font-bold'}>[{COMBO_THRESHOLDS.MANY}]</span>
                  </div>
                  <a
                    href="https://github.com/carterwayneskhizeine/CrazyTypewriter"
@@ -616,7 +705,9 @@ export default function App() {
                    className={`flex items-center justify-center gap-2 mt-4 py-2 px-4 rounded transition-all duration-200 ${
                      isTerminal
                        ? 'border border-terminal text-terminal hover:bg-terminal hover:text-black'
-                       : 'border border-[#007acc] text-[#007acc] hover:bg-[#007acc] hover:text-white'
+                       : isVSCode
+                       ? 'border border-[#007acc] text-[#007acc] hover:bg-[#007acc] hover:text-white'
+                       : 'border border-[#ff006e] text-[#ff006e] hover:bg-[#ff006e] hover:text-white font-medium'
                    }`}
                  >
                    <Github size={18} />
@@ -631,11 +722,21 @@ export default function App() {
   );
 }
 
-const ControlGroup: React.FC<{ label: string; children: React.ReactNode; isTerminal?: boolean }> = ({ label, children, isTerminal = true }) => (
-  <div>
-    <label className={`block text-xs mb-2 ${isTerminal ? 'font-terminal text-terminal crt-glow-subtle tracking-wider' : 'font-mono text-[#d4d4d4] tracking-wider'}`}>
-      {isTerminal ? `[${label}]` : `${label}`}
-    </label>
-    {children}
-  </div>
-);
+const ControlGroup: React.FC<{ label: string; children: React.ReactNode; themeMode?: ThemeMode }> = ({ label, children, themeMode = 'terminal' }) => {
+  const isTerminal = themeMode === 'terminal';
+  const isVSCode = themeMode === 'vscode';
+  const isModern = themeMode === 'modern';
+
+  return (
+    <div>
+      <label className={`block text-xs mb-2 ${(() => {
+        if (isTerminal) return 'font-terminal text-terminal crt-glow-subtle tracking-wider';
+        if (isVSCode) return 'font-mono text-[#d4d4d4] tracking-wider';
+        return 'font-sans text-[#1a1a1a] font-semibold tracking-wider';
+      })()}`}>
+        {isTerminal ? `[${label}]` : `${label}`}
+      </label>
+      {children}
+    </div>
+  );
+};

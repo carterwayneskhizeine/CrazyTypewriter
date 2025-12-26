@@ -1,4 +1,44 @@
 # Power Mode Typer - Developer Guide & Architecture
+## Theme System
+The app supports **three** visual themes that can be toggled via the header in a cyclic rotation:
+
+1. **Retro Terminal Theme:**
+   - Colors: Green monochrome (#00ff00, #006600, etc.)
+   - Effects: CRT scanlines, screen curvature, flicker, text glow
+   - Font: System default with terminal styling
+   - UI Elements: ASCII borders, block cursor, retro buttons
+   - Scrollbar: Green styled with glow effects
+
+2. **VS Code Modern Theme:**
+   - Colors: VS Code dark theme (#1e1e1e, #252526, #007acc, #d4d4d4)
+   - Effects: Clean flat design, subtle shadows, rounded corners
+   - Font: Monospace with modern styling
+   - UI Elements: Thin cursor, rounded buttons, hover transitions
+   - Scrollbar: Modern dark gray with rounded thumb
+
+3. **Modern Wild White Theme:**
+   - Colors: High-contrast white (#ffffff) with dark text (#1a1a1a)
+   - Accent Colors: Neon pink (#ff006e), cyan (#00d9ff), yellow (#ffea00)
+   - Effects: 3D button tilt, geometric background patterns, gradient waves
+   - Font: Sans-serif with modern styling
+   - UI Elements: Rounded buttons with 3D hover effects, neon glow accents
+   - Scrollbar: Gradient (pink to cyan) with clean white track
+   - Particles: Random neon colors regardless of power level
+
+**Theme Implementation:**
+- `themeMode` state controls current theme (`'terminal' | 'vscode' | 'modern'`)
+- Theme-specific color arrays: `TERMINAL_LEVEL_COLORS`, `VSCODE_LEVEL_COLORS`, and `MODERN_LEVEL_COLORS`
+- Helper function `getLevelColors(theme, level)` returns appropriate colors
+- All UI components use conditional classes based on theme flags (`isTerminal`, `isVSCode`, `isModern`)
+- Particle system dynamically switches color palettes based on theme
+- Modern theme uses `MODERN_NEON_COLORS` for random particle colors
+
+**Theme Switching:**
+- Cyclic rotation: Terminal → VS Code → Modern → Terminal
+- Button icons change based on current theme (Monitor → Sun → Terminal)
+- All settings and features persist across theme switches
+
+---
 
 ## Project Overview
 **Power Mode Typer** is a gamified, high-octane web-based text editor built with React and TypeScript. It mimics the "Power Mode" found in some IDE plugins and the "Many Power" meme from Google Colab.
@@ -85,45 +125,29 @@ The visual intensity scales based on `combo` count:
 | **SUPER POWER** | 30-59 | Bright Blue/White-ish. Moderate shake. |
 | **MANY POWER** | 60+ | Intense Blue/White. Intense shake. |
 
----
+**Modern Wild White Theme (Neon):**
+| Level | Threshold | Visuals |
+| :--- | :--- | :--- |
+| **None** | 0-9 | Light Gray (#cccccc). Minimal effects. |
+| **POWER** | 10-29 | Random Neon Pink/Cyan/Yellow. Light screen shake. |
+| **SUPER POWER** | 30-59 | Expanded neon palette (includes magenta). Moderate shake. |
+| **MANY POWER** | 60+ | Full neon spectrum with white. Intense shake + neon pulse animation. "⚠ use with caution" warning. |
 
-## Theme System
-The app supports two visual themes that can be toggled via the header:
-
-1. **Retro Terminal Theme:**
-   - Colors: Green monochrome (#00ff00, #006600, etc.)
-   - Effects: CRT scanlines, screen curvature, flicker, text glow
-   - Font: System default with terminal styling
-   - UI Elements: ASCII borders, block cursor, retro buttons
-   - Scrollbar: Green styled with glow effects
-
-2. **VS Code Modern Theme:**
-   - Colors: VS Code dark theme (#1e1e1e, #252526, #007acc, #d4d4d4)
-   - Effects: Clean flat design, subtle shadows, rounded corners
-   - Font: Monospace with modern styling
-   - UI Elements: Thin cursor, rounded buttons, hover transitions
-   - Scrollbar: Modern dark gray with rounded thumb
-
-**Theme Implementation:**
-- `themeMode` state controls current theme (`'terminal' | 'vscode'`)
-- Theme-specific color arrays: `TERMINAL_LEVEL_COLORS` and `VSCODE_LEVEL_COLORS`
-- Helper function `getLevelColors(theme, level)` returns appropriate colors
-- All UI components use conditional classes based on `isTerminal` flag
-- Particle system dynamically switches color palettes based on theme
+**Note:** Modern theme particles use random neon colors from `MODERN_NEON_COLORS` regardless of power level, creating a wild, unpredictable visual effect.
 
 ---
 
 ### Markdown Preview
 - Uses `react-markdown` library for rendering
 - Toggle between edit and preview modes via Eye/Edit icons
-- Theme-specific styling: `.markdown-preview` (terminal) and `.vscode-markdown-preview` (VS Code)
+- Theme-specific styling: `.markdown-preview` (terminal), `.vscode-markdown-preview` (VS Code), and `.modern-markdown-preview` (Modern Wild White)
 - Supports headings, lists, code blocks, tables, blockquotes, links, etc.
 
 ### Copy to Clipboard
 - One-click copy button in header (left of preview toggle)
 - Uses `navigator.clipboard.writeText(text)` API
 - Visual feedback: Check icon appears for 2 seconds after successful copy
-- Theme-specific icon colors (terminal: white, VS Code: blue)
+- Theme-specific icon colors (terminal: white, VS Code: blue, Modern: cyan)
 
 ### Send to Server
 - Send button in header (left of copy button)
@@ -173,10 +197,26 @@ The project is containerized using a multi-stage `Dockerfile`:
     - Update `LEVEL_COLORS` and `COMBO_THRESHOLDS` in `App.tsx`.
     - Define a new Shake keyframe in `index.html` if necessary.
 
-3.  **Layout Changes:**
+3.  **Adding New Themes:**
+    - Update `ThemeMode` type in `App.tsx` to include new theme (e.g., `'terminal' | 'vscode' | 'modern' | 'newtheme'`)
+    - Create new color constant array: `NEWTHEME_LEVEL_COLORS` following existing pattern
+    - For random particle colors (like Modern theme), create a separate `NEWTHEME_NEON_COLORS` array
+    - Update `getLevelColors()` function to handle the new theme
+    - Update all color helper functions (`getPrimaryColor()`, `getBgColor()`, etc.) to return new theme colors
+    - Add theme flag: `isNewTheme = themeMode === 'newtheme'`
+    - Update all class helper functions (`bodyContainerClass`, `headerClass`, etc.) to handle new theme
+    - Update all conditional rendering throughout the component (use ternary chains or helper functions)
+    - Update `ControlGroup` component to accept and handle the new theme
+    - Update theme toggle button logic to include new theme in cycle
+    - Add corresponding icon to imports and update button icon logic
+    - Add Tailwind color extensions in `index.html`
+    - Add comprehensive CSS styles in `index.html` (cursor, buttons, scrollbar, markdown preview, etc.)
+    - Test all features with new theme (particles, combo system, markdown preview, settings panel, etc.)
+
+4.  **Layout Changes:**
     - The app relies on `relative` positioning for the `main` container and `absolute` for the HUD.
     - If changing the layout, ensure `getCaretCoordinates` handles offsets correctly. Specifically, watch out for `scrollTop` and `window.scrollY` interactions.
 
-4.  **Performance:**
+5.  **Performance:**
     - The app is optimized for high-frequency `keydown` events. Avoid heavy computations inside `handleInput`.
     - The `utils/caret.ts` DOM read/write is the most expensive operation; keep it efficient.
