@@ -479,13 +479,6 @@ export default function App() {
             })()}`}>
               POWER
             </h1>
-            <p className={`text-xs font-terminal ${(() => {
-              if (isTerminal) return 'text-terminal-dim';
-              if (isVSCode) return 'text-[#858585] font-mono';
-              return 'text-[#666666] font-sans';
-            })()}`}>
-              {isTerminal ? 'TYPE FAST TO INCREASE POWER' : isVSCode ? 'Type fast to increase power' : 'Type fast to increase power'}
-            </p>
           </div>
         </div>
 
