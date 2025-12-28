@@ -32,3 +32,13 @@ export interface Coordinates {
   left: number;
   height: number;
 }
+
+export interface User {
+  id: number;
+  username: string;
+}
+
+export interface LoginResponse {
+  message: string;
+  user: User;
+}

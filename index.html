@@ -1082,6 +1082,194 @@
       .modern-markdown-preview .mermaid .arrowheadPath {
         fill: #ffcc00;
       }
+
+      /* ==================== LOGIN MODAL STYLES ==================== */
+
+      /* --- Terminal Modal --- */
+      .login-modal-terminal {
+        background: #000000;
+        border: 2px solid #33ff33;
+        box-shadow: 0 0 20px rgba(0, 255, 0, 0.5), inset 0 0 20px rgba(0, 255, 0, 0.1);
+      }
+
+      .login-header-terminal {
+        background: #050505;
+        border-bottom: 2px solid #33ff33;
+        padding: 1rem 1.5rem;
+      }
+
+      .login-input-terminal {
+        background: #000000;
+        border: 2px solid #00cc00;
+        color: #00ff00;
+        padding: 0.75rem;
+        font-family: "Microsoft YaHei Light", monospace;
+        font-size: 1rem;
+        transition: all 0.2s;
+      }
+
+      .login-input-terminal:focus {
+        outline: none;
+        border-color: #33ff33;
+        box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+      }
+
+      .login-btn-terminal {
+        background: transparent;
+        border: 2px solid #33ff33;
+        color: #33ff33;
+        padding: 0.75rem;
+        font-family: "Microsoft YaHei Light", monospace;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: all 0.15s;
+      }
+
+      .login-btn-terminal:hover:not(:disabled) {
+        background: #33ff33;
+        color: #000000;
+      }
+
+      .login-error-terminal {
+        color: #ff3333;
+        text-shadow: 0 0 5px #ff0000;
+        font-family: "Microsoft YaHei Light", monospace;
+      }
+
+      /* --- VS Code Modal --- */
+      .login-modal-vscode {
+        background: #252526;
+        border: 1px solid #3c3c3c;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5);
+        border-radius: 8px;
+      }
+
+      .login-header-vscode {
+        background: #1e1e1e;
+        border-bottom: 1px solid #3c3c3c;
+        padding: 1rem 1.5rem;
+        border-radius: 8px 8px 0 0;
+      }
+
+      .login-input-vscode {
+        background: #1e1e1e;
+        border: 1px solid #3c3c3c;
+        color: #d4d4d4;
+        padding: 0.75rem;
+        font-family: "Consolas", "Courier New", monospace;
+        font-size: 0.9rem;
+        border-radius: 4px;
+        transition: all 0.2s;
+      }
+
+      .login-input-vscode:focus {
+        outline: none;
+        border-color: #007acc;
+        box-shadow: 0 0 0 1px #007acc;
+      }
+
+      .login-btn-vscode {
+        background: #007acc;
+        border: none;
+        color: #ffffff;
+        padding: 0.75rem;
+        font-family: "Segoe UI", system-ui, sans-serif;
+        font-size: 0.9rem;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .login-btn-vscode:hover:not(:disabled) {
+        background: #1a9fff;
+      }
+
+      .login-error-vscode {
+        color: #f48771;
+        background: rgba(244, 135, 113, 0.1);
+        padding: 0.75rem;
+        border-radius: 4px;
+        font-family: "Consolas", monospace;
+        font-size: 0.85rem;
+      }
+
+      /* --- Modern Modal --- */
+      .login-modal-modern {
+        background: #ffffff;
+        border: 2px solid #ffd700;
+        box-shadow: 0 20px 60px rgba(255, 215, 0, 0.2), 0 8px 20px rgba(0, 0, 0, 0.1);
+        border-radius: 16px;
+        animation: modalSlideIn 0.3s ease-out;
+      }
+
+      @keyframes modalSlideIn {
+        from {
+          opacity: 0;
+          transform: translateY(-20px) scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+
+      .login-header-modern {
+        background: linear-gradient(135deg, #fffde7 0%, #fffbcc 100%);
+        border-bottom: 2px solid #ffd700;
+        padding: 1.25rem 1.5rem;
+        border-radius: 14px 14px 0 0;
+      }
+
+      .login-input-modern {
+        background: #fafafa;
+        border: 2px solid #e0e0e0;
+        color: #1a1a1a;
+        padding: 0.875rem;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 1rem;
+        border-radius: 8px;
+        transition: all 0.3s;
+      }
+
+      .login-input-modern:focus {
+        outline: none;
+        border-color: #ffd700;
+        box-shadow: 0 0 0 4px rgba(255, 215, 0, 0.1);
+        background: #ffffff;
+      }
+
+      .login-btn-modern {
+        background: linear-gradient(135deg, #ffd700 0%, #ffcc00 100%);
+        border: none;
+        color: #000000;
+        padding: 0.875rem;
+        font-family: system-ui, -apple-system, sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.3s;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+      }
+
+      .login-btn-modern:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(255, 215, 0, 0.4);
+      }
+
+      .login-btn-modern:active {
+        transform: translateY(0);
+      }
+
+      .login-error-modern {
+        color: #dc2626;
+        background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+        padding: 0.875rem;
+        border-radius: 8px;
+        font-family: system-ui, sans-serif;
+        font-size: 0.9rem;
+        border: 1px solid #fecaca;
+      }
     </style>
   </head>
   <body>

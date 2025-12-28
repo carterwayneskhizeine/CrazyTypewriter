@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun } from 'lucide-react';
+import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun, Lock } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMermaid from 'remark-mermaid-plugin';
 import rehypeRaw from 'rehype-raw';
@@ -76,6 +76,13 @@ export default function App() {
   const [themeMode, setThemeMode] = useState<ThemeMode>('terminal');
   const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
+  // Authentication state
+  const [user, setUser] = useState<{ id: number; username: string } | null>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [loginError, setLoginError] = useState('');
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
+
   // Initialize Mermaid after component mounts
   useEffect(() => {
     const initializeMermaid = async () => {
@@ -91,6 +98,22 @@ export default function App() {
 
     initializeMermaid();
   }, [themeMode]);
+
+  // Check for existing session on mount
+  useEffect(() => {
+    const checkSession = () => {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        try {
+          setUser(JSON.parse(storedUser));
+        } catch (err) {
+          console.error('Failed to parse user data:', err);
+          localStorage.removeItem('user');
+        }
+      }
+    };
+    checkSession();
+  }, []);
 
   // Render Mermaid diagrams when text changes and in preview mode
   useEffect(() => {
@@ -291,23 +314,89 @@ export default function App() {
     }
   };
 
+  const handleLogin = async () => {
+    if (!loginForm.username.trim() || !loginForm.password.trim()) {
+      setLoginError('Please enter username and password');
+      return;
+    }
+
+    setIsLoggingIn(true);
+    setLoginError('');
+
+    try {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // CRITICAL for cookie handling
+        body: JSON.stringify({
+          username: loginForm.username,
+          password: loginForm.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('user', JSON.stringify(data.user));
+        setUser(data.user);
+        setShowLoginModal(false);
+        setLoginForm({ username: '', password: '' });
+      } else {
+        setLoginError(data.error || data.message || 'Login failed');
+      }
+    } catch (err) {
+      console.error('Login error:', err);
+      setLoginError('Network error. Please try again.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      localStorage.removeItem('user');
+      setUser(null);
+    }
+  };
+
   const handleSend = async () => {
     if (!text.trim()) return;
 
+    // Check authentication
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
     setSendStatus('sending');
     try {
-      // Use relative path - nginx will proxy to https://envsVITE_POST_HOST/api/messages
+      // Use relative path - nginx will proxy to backend
       const response = await fetch('/api/messages', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // REQUIRED for auth
         body: JSON.stringify({ content: text }),
       });
 
       if (response.ok) {
         setSendStatus('success');
         setTimeout(() => setSendStatus('idle'), 2000);
+      } else if (response.status === 401) {
+        // Session expired
+        setSendStatus('idle');
+        setUser(null);
+        localStorage.removeItem('user');
+        setShowLoginModal(true);
+        setLoginError('Session expired. Please login again.');
       } else {
         setSendStatus('error');
         setTimeout(() => setSendStatus('idle'), 2000);
@@ -488,6 +577,31 @@ export default function App() {
             <div className={`text-xs uppercase tracking-wider ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`}>MAX STREAK</div>
             <div className={`text-base ${isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700] font-bold'}`}>{maxCombo}</div>
           </div>
+          {/* Login/Logout Button */}
+          {user ? (
+            <button
+              onClick={handleLogout}
+              className={`${themeBtnClass} flex items-center gap-1.5`}
+              title={`Logout as ${user.username}`}
+            >
+              <span className={`text-xs ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'} ${
+                isTerminal ? 'text-terminal' : isVSCode ? 'text-[#d4d4d4]' : 'text-[#1a1a1a]'
+              }`}>
+                {user.username}
+              </span>
+              <X className={`w-3 h-3 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`} />
+            </button>
+          ) : (
+            <button
+              onClick={() => setShowLoginModal(true)}
+              className={themeBtnClass}
+              title="Login"
+            >
+              <Lock className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+            </button>
+          )}
+          {/* Send Button - Only show when logged in */}
+          {user && (
           <button
             onClick={handleSend}
             className={themeBtnClass}
@@ -504,6 +618,7 @@ export default function App() {
               <Send className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
             )}
           </button>
+          )}
           <button
             onClick={handleCopy}
             className={themeBtnClass}
@@ -742,6 +857,131 @@ export default function App() {
           </div>
         </div>
       </div>
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <div
+            className={`absolute inset-0 backdrop-blur-sm ${
+              isTerminal ? 'bg-black/70' :
+              isVSCode ? 'bg-black/50' :
+              'bg-gray-900/30'
+            }`}
+            onClick={() => {
+              setShowLoginModal(false);
+              setLoginError('');
+              setLoginForm({ username: '', password: '' });
+            }}
+          />
+
+          {/* Modal */}
+          <div className={`relative z-10 w-full max-w-md ${
+            isTerminal ? 'login-modal-terminal' :
+            isVSCode ? 'login-modal-vscode' :
+            'login-modal-modern'
+          }`}>
+            {/* Header */}
+            <div className={`${
+              isTerminal ? 'login-header-terminal' :
+              isVSCode ? 'login-header-vscode' :
+              'login-header-modern'
+            }`}>
+              <h2 className={`text-lg ${
+                isTerminal ? 'text-terminal crt-glow font-terminal' :
+                isVSCode ? 'text-[#d4d4d4] font-mono' :
+                'text-[#1a1a1a] font-bold font-sans'
+              }`}>
+                {isTerminal ? '[ LOGIN ]' : 'Login'}
+              </h2>
+            </div>
+
+            {/* Body */}
+            <div className={`p-8`}>
+              {/* Error Message */}
+              {loginError && (
+                <div className={`mb-4 p-3 ${
+                  isTerminal ? 'login-error-terminal' :
+                  isVSCode ? 'login-error-vscode' :
+                  'login-error-modern'
+                }`}>
+                  {isTerminal ? `[ERROR] ${loginError}` : loginError}
+                </div>
+              )}
+
+              {/* Username Input */}
+              <input
+                type="text"
+                value={loginForm.username}
+                onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
+                className={`w-full mb-4 ${
+                  isTerminal ? 'login-input-terminal' :
+                  isVSCode ? 'login-input-vscode' :
+                  'login-input-modern'
+                }`}
+                placeholder={isTerminal ? 'ENTER USERNAME...' : 'Username'}
+                autoComplete="username"
+                autoFocus
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') {
+                    (e.target.nextElementSibling as HTMLElement)?.focus();
+                  }
+                }}
+              />
+
+              {/* Password Input */}
+              <input
+                type="password"
+                value={loginForm.password}
+                onChange={(e) => setLoginForm({ ...loginForm, password: e.target.value })}
+                className={`w-full mb-6 ${
+                  isTerminal ? 'login-input-terminal' :
+                  isVSCode ? 'login-input-vscode' :
+                  'login-input-modern'
+                }`}
+                placeholder={isTerminal ? 'ENTER PASSWORD...' : 'Password'}
+                autoComplete="current-password"
+                onKeyPress={(e) => {
+                  if (e.key === 'Enter') handleLogin();
+                }}
+              />
+
+              {/* Login Button */}
+              <button
+                onClick={handleLogin}
+                disabled={isLoggingIn}
+                className={`w-full ${
+                  isTerminal ? 'login-btn-terminal' :
+                  isVSCode ? 'login-btn-vscode' :
+                  'login-btn-modern'
+                }`}
+                style={{ opacity: isLoggingIn ? 0.6 : 1, cursor: isLoggingIn ? 'not-allowed' : 'pointer' }}
+              >
+                {isLoggingIn
+                  ? (isTerminal ? '[ AUTHENTICATING... ]' : 'Authenticating...')
+                  : (isTerminal ? '[ LOGIN ]' : 'Login')
+                }
+              </button>
+
+              {/* Cancel Button */}
+              <button
+                onClick={() => {
+                  setShowLoginModal(false);
+                  setLoginError('');
+                  setLoginForm({ username: '', password: '' });
+                }}
+                className={`w-full mt-3 text-sm ${
+                  isTerminal ? 'text-terminal-dim hover:text-terminal font-terminal' :
+                  isVSCode ? 'text-[#858585] hover:text-[#d4d4d4] font-mono' :
+                  'text-[#666666] hover:text-[#1a1a1a] font-sans'
+                }`}
+              >
+                {isTerminal ? '[ CANCEL ]' : 'Cancel'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
