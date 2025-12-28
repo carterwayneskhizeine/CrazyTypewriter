@@ -11,6 +11,7 @@ Gamified text editor with particle effects, screen shake, and combo tracking. Bu
 - Combo System with Dynamic HUD (follows cursor position)
 - 3 Themes: Retro Terminal, VS Code Modern, Modern Wild White
 - Markdown Preview, Copy to Clipboard, Send to Server
+- **User Authentication**: Login/logout with cookie-based session management
 - Responsive Design
 
 ## Tech Stack
@@ -26,6 +27,28 @@ Gamified text editor with particle effects, screen shake, and combo tracking. Bu
 - Uses `useState` + `useRef` for performance
 - **Critical:** Particles stored in `particlesRef.current` NOT `useState` to avoid render cycle overhead
 - Key state: `text`, `combo`, `config`, `caretY`, `hudSide`
+- **Authentication state**: `user`, `showLoginModal`, `loginForm`, `loginError`, `isLoggingIn`
+
+### Authentication System
+**Cookie-based authentication** with localStorage session persistence:
+
+**Login Flow:**
+1. User clicks Lock icon → modal opens
+2. Submit credentials to `/api/auth/login` (proxied via nginx)
+3. Backend sets HttpOnly cookie + returns user info
+4. User info stored in `localStorage` for session persistence
+5. Modal closes, Send button becomes visible
+
+**Session Management:**
+- On app mount: check `localStorage` for stored user data
+- On logout: clear `localStorage` and call `/api/auth/logout`
+- Send API requires authentication (401 triggers re-login prompt)
+- All authenticated requests use `credentials: 'include'` to send cookies
+
+**UI Components:**
+- **Login Button**: Lock icon (logged out) → Username + X icon (logged in)
+- **Send Button**: Only visible when `user` state exists
+- **Login Modal**: Theme-specific styling (Terminal/VS Code/Modern), backdrop blur, Enter key support
 
 ### Caret Tracking (utils/caret.ts)
 Uses **Mirror Div Strategy** to get exact cursor position:
@@ -62,7 +85,8 @@ Three themes in cyclic rotation: Terminal → VS Code → Modern → Terminal
 Colors differ per theme (green/blue/neon), Modern theme has expanded neon palette at higher levels.
 
 ## Key Files
-- `App.tsx` - Main component, state management, particle physics
+- `App.tsx` - Main component, state management, particle physics, authentication logic
+- `types.ts` - TypeScript interfaces (PowerConfig, Particle, User, LoginResponse)
 - `utils/caret.ts` - Cursor position tracking
 - `nginx/default.conf` - SPA routing + API proxy (`/api/` → external server via `POST_HOST` env var)
 - `docker-compose.yml` - Port mapping `5111:80`
@@ -90,3 +114,16 @@ Colors differ per theme (green/blue/neon), Modern theme has expanded neon palett
 ### Layout Changes
 - Main container uses `relative`, HUD uses `absolute`
 - Watch `scrollTop` and `window.scrollY` interactions when modifying layout
+
+### Authentication Security
+**DO:**
+- Use `credentials: 'include'` for all authenticated requests (enables cookie handling)
+- Store only non-sensitive user info in `localStorage` (`{id, username}`)
+- Use `type="password"` for password inputs (masks input)
+- Let browser handle HttpOnly cookies automatically
+
+**DON'T:**
+- Store passwords or session tokens in `localStorage` (security risk)
+- Manually extract or set cookies in JavaScript
+- Send credentials in URL parameters
+- Log passwords to console
