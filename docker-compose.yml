@@ -7,4 +7,24 @@ services:
       - .env
     environment:
       - POST_HOST=${VITE_POST_HOST}
+    depends_on:
+      - sync-server
     restart: always
+    networks:
+      - app-network
+
+  sync-server:
+    build: ./sync-server
+    environment:
+      - NODE_ENV=production
+      - PORT=3001
+      - CORS_ORIGIN=*
+    volumes:
+      - ./sync-server/data:/app/data
+    restart: always
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge

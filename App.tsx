@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun, Lock } from 'lucide-react';
+import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun, Lock, Cloud } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMermaid from 'remark-mermaid-plugin';
 import rehypeRaw from 'rehype-raw';
 import { getCaretCoordinates } from './utils/caret';
-import { PowerConfig, Particle, PowerLevel } from './types';
+import { PowerConfig, Particle, PowerLevel, User, SyncStatus } from './types';
+import { useSync } from './hooks/useSync';
 
 // Default Configurations
 const DEFAULT_CONFIG: PowerConfig = {
@@ -63,7 +64,7 @@ type ViewMode = 'edit' | 'preview';
 type ThemeMode = 'terminal' | 'vscode' | 'modern';
 
 export default function App() {
-  const [text, setText] = useState<string>('Type here to unleash power...');
+  const [text, setText] = useState<string>('');
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
   const [config, setConfig] = useState<PowerConfig>(DEFAULT_CONFIG);
@@ -77,11 +78,24 @@ export default function App() {
   const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
 
   // Authentication state
-  const [user, setUser] = useState<{ id: number; username: string } | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginForm, setLoginForm] = useState({ username: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+
+  // Stable callback for sync content updates to prevent reconnection cycles
+  const handleContentReceived = useCallback((content: string) => {
+    setText(content);
+  }, []);
+
+  // Multi-device sync
+  const { syncStatus } = useSync({
+    user,
+    text,
+    onContentReceived: handleContentReceived,
+    debounceMs: parseInt(import.meta.env.VITE_SYNC_DEBOUNCE_MS || '5000', 10)
+  });
 
   // Initialize Mermaid after component mounts
   useEffect(() => {
@@ -577,6 +591,14 @@ export default function App() {
             <div className={`text-xs uppercase tracking-wider ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`}>MAX STREAK</div>
             <div className={`text-base ${isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700] font-bold'}`}>{maxCombo}</div>
           </div>
+          {/* Sync Status Indicator - Only show when logged in */}
+          {user && syncStatus && (
+            <div className="flex items-center gap-1.5" title={`Last synced: ${syncStatus.lastSyncedAt ? new Date(syncStatus.lastSyncedAt).toLocaleTimeString() : 'Never'}`}>
+              <div className={`w-2 h-2 rounded-full ${syncStatus.connected ? 'bg-green-500' : 'bg-red-500'} ${syncStatus.syncing ? 'animate-pulse' : ''}`} />
+              {syncStatus.pendingChanges && <div className="w-2 h-2 rounded-full bg-yellow-500 animate-ping" />}
+              <Cloud className={`w-3.5 h-3.5 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#858585]' : 'text-[#999999]'} ${syncStatus.syncing ? 'animate-pulse' : ''}`} />
+            </div>
+          )}
           {/* Login/Logout Button */}
           {user ? (
             <button

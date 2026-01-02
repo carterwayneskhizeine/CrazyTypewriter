@@ -42,3 +42,18 @@ export interface LoginResponse {
   message: string;
   user: User;
 }
+
+// Sync types
+export interface SyncStatus {
+  connected: boolean;
+  syncing: boolean;
+  lastSyncedAt: Date | null;
+  pendingChanges: boolean;
+  conflictDetected: boolean;
+}
+
+export interface DocumentVersion {
+  version: number;
+  content: string;
+  lastModified: Date;
+}
