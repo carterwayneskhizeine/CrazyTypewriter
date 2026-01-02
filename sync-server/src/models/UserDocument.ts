@@ -81,6 +81,27 @@ export class UserDocumentModel {
     return this.findByUserId(userId) || null;
   }
 
+  // Force update without version check (for undo operations)
+  forceUpdate(userId: number, content: string, incrementVersion: boolean = true): UserDocument | null {
+    const current = this.findByUserId(userId);
+    if (!current) return null;
+
+    const escapedContent = this.escapeString(content);
+    const versionIncrement = incrementVersion ? ', version = version + 1' : '';
+
+    this.db.exec(`
+      UPDATE user_documents
+      SET content = '${escapedContent}',
+          updated_at = CURRENT_TIMESTAMP,
+          last_modified = CURRENT_TIMESTAMP${versionIncrement}
+      WHERE user_id = ${userId}
+    `);
+
+    saveDatabase();
+
+    return this.findByUserId(userId) || null;
+  }
+
   // Delete document
   delete(userId: number): boolean {
     this.db.exec(`DELETE FROM user_documents WHERE user_id = ${userId}`);

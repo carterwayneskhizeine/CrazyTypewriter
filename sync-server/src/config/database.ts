@@ -46,9 +46,26 @@ export async function initializeDatabase(): Promise<Database> {
       )
     `);
 
-    // Create index
+    // Create document history table for undo functionality
+    currentDb.run(`
+      CREATE TABLE IF NOT EXISTS document_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        username TEXT NOT NULL,
+        content TEXT NOT NULL,
+        version INTEGER NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES user_documents(user_id) ON DELETE CASCADE
+      )
+    `);
+
+    // Create indexes
     currentDb.run(`
       CREATE INDEX IF NOT EXISTS idx_user_id ON user_documents(user_id)
+    `);
+
+    currentDb.run(`
+      CREATE INDEX IF NOT EXISTS idx_history_user_id ON document_history(user_id, created_at DESC)
     `);
 
     // Save to disk

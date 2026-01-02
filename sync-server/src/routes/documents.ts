@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { validateSession } from '../middleware/authMiddleware';
-import { getDocument, updateDocument, deleteDocument as deleteDoc } from '../services/syncService';
+import { getDocument, updateDocument, deleteDocument as deleteDoc, undoDocument } from '../services/syncService';
 
 const router = Router();
 
@@ -73,6 +73,27 @@ router.delete('/', validateSession, (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error deleting document:', error);
     res.status(500).json({ error: 'Failed to delete document' });
+  }
+});
+
+// Undo to previous version
+router.post('/undo', validateSession, (req: Request, res: Response) => {
+  try {
+    const user = req.user!;
+    const result = undoDocument(user.id, user.username);
+
+    if (result.success && result.document) {
+      res.json({
+        content: result.document.content,
+        version: result.document.version,
+        lastModified: result.document.last_modified
+      });
+    } else {
+      res.status(400).json({ error: result.message || 'Failed to undo' });
+    }
+  } catch (error) {
+    console.error('Error undoing document:', error);
+    res.status(500).json({ error: 'Failed to undo document' });
   }
 });
 

@@ -25,4 +25,4 @@ dist-ssr
 
 .env
 
-sync-server\data\sync.db
+sync-server/data/sync.db

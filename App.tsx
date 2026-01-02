@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun, Lock, Cloud } from 'lucide-react';
+import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun, Lock, Cloud, Undo } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkMermaid from 'remark-mermaid-plugin';
 import rehypeRaw from 'rehype-raw';
@@ -76,6 +76,7 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [themeMode, setThemeMode] = useState<ThemeMode>('terminal');
   const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [undoStatus, setUndoStatus] = useState<'idle' | 'undoing' | 'success' | 'error'>('idle');
 
   // Authentication state
   const [user, setUser] = useState<User | null>(null);
@@ -90,7 +91,7 @@ export default function App() {
   }, []);
 
   // Multi-device sync
-  const { syncStatus } = useSync({
+  const { syncStatus, manualSync } = useSync({
     user,
     text,
     onContentReceived: handleContentReceived,
@@ -422,6 +423,54 @@ export default function App() {
     }
   };
 
+  const handleUndo = async () => {
+    // Check authentication
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+
+    setUndoStatus('undoing');
+    try {
+      const response = await fetch('/api/sync/documents/undo', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-user-id': user.id.toString(),
+          'x-username': user.username,
+        },
+        credentials: 'include',
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setText(data.content);
+        setUndoStatus('success');
+        setTimeout(() => setUndoStatus('idle'), 2000);
+        // Trigger manual sync to update client version
+        setTimeout(() => manualSync && manualSync(), 100);
+      } else if (response.status === 401) {
+        setUndoStatus('idle');
+        setUser(null);
+        localStorage.removeItem('user');
+        setShowLoginModal(true);
+        setLoginError('Session expired. Please login again.');
+      } else if (response.status === 400) {
+        const error = await response.json();
+        setUndoStatus('error');
+        setTimeout(() => setUndoStatus('idle'), 2000);
+        console.error('Undo failed:', error.error);
+      } else {
+        setUndoStatus('error');
+        setTimeout(() => setUndoStatus('idle'), 2000);
+      }
+    } catch (err) {
+      console.error('Failed to undo:', err);
+      setUndoStatus('error');
+      setTimeout(() => setUndoStatus('idle'), 2000);
+    }
+  };
+
   // --- Render Helpers ---
 
   const getLevelLabel = () => {
@@ -624,6 +673,23 @@ export default function App() {
           )}
           {/* Send Button - Only show when logged in */}
           {user && (
+          <>
+          <button
+            onClick={handleUndo}
+            className={themeBtnClass}
+            title={undoStatus === 'success' ? 'Undone!' : undoStatus === 'error' ? 'No history!' : undoStatus === 'undoing' ? 'Undoing...' : 'Undo'}
+            disabled={undoStatus === 'undoing'}
+          >
+            {undoStatus === 'success' ? (
+              <Check className={`w-4 h-4 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700]'}`} />
+            ) : undoStatus === 'error' ? (
+              <AlertCircle className="w-4 h-4 text-red-500" />
+            ) : undoStatus === 'undoing' ? (
+              <Undo className={`w-4 h-4 animate-pulse ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+            ) : (
+              <Undo className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+            )}
+          </button>
           <button
             onClick={handleSend}
             className={themeBtnClass}
@@ -640,6 +706,7 @@ export default function App() {
               <Send className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
             )}
           </button>
+          </>
           )}
           <button
             onClick={handleCopy}
