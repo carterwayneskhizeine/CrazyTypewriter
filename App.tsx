@@ -76,6 +76,7 @@ export default function App() {
   const [copied, setCopied] = useState(false);
   const [themeMode, setThemeMode] = useState<ThemeMode>('terminal');
   const [sendStatus, setSendStatus] = useState<'idle' | 'sending' | 'success' | 'error'>('idle');
+  const [sendUpdateKey, setSendUpdateKey] = useState(0); // Force re-render on mobile
   const [undoStatus, setUndoStatus] = useState<'idle' | 'undoing' | 'success' | 'error'>('idle');
 
   // Authentication state
@@ -404,7 +405,11 @@ export default function App() {
 
       if (response.ok) {
         setSendStatus('success');
-        setTimeout(() => setSendStatus('idle'), 2000);
+        setSendUpdateKey(prev => prev + 1); // Force re-render on mobile
+        setTimeout(() => {
+          setSendStatus('idle');
+          setSendUpdateKey(prev => prev + 1);
+        }, 2000);
       } else if (response.status === 401) {
         // Session expired
         setSendStatus('idle');
@@ -691,6 +696,7 @@ export default function App() {
             )}
           </button>
           <button
+            key={sendUpdateKey}
             onClick={handleSend}
             className={themeBtnClass}
             title={sendStatus === 'success' ? 'Sent!' : sendStatus === 'error' ? 'Failed!' : sendStatus === 'sending' ? 'Sending...' : 'Send'}
