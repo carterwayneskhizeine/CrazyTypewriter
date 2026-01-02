@@ -24,3 +24,5 @@ dist-ssr
 *.sw?
 
 .env
+
+sync-server\data\sync.db
