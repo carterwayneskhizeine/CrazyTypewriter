@@ -17,14 +17,20 @@ export class DocumentHistoryModel {
     return getDatabase();
   }
 
+  // Get current timestamp in ISO format (local time)
+  private getCurrentTimestamp(): string {
+    return new Date().toISOString();
+  }
+
   // Save a snapshot to history
   saveHistory(userId: number, username: string, content: string, version: number): void {
     const escapedContent = this.escapeString(content);
     const escapedUsername = this.escapeString(username);
+    const now = this.getCurrentTimestamp();
 
     this.db.exec(`
-      INSERT INTO document_history (user_id, username, content, version)
-      VALUES (${userId}, '${escapedUsername}', '${escapedContent}', ${version})
+      INSERT INTO document_history (user_id, username, content, version, created_at)
+      VALUES (${userId}, '${escapedUsername}', '${escapedContent}', ${version}, '${now}')
     `);
 
     // Clean up old history (keep only MAX_HISTORY_SIZE most recent)

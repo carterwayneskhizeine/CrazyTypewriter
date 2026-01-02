@@ -106,7 +106,8 @@ export function useSync({
       clientVersionRef.current = version;
       isUpdatingRef.current = true;
       onContentReceived(content);
-      isUpdatingRef.current = false;
+      // Delay resetting flag to prevent triggering sync
+      setTimeout(() => { isUpdatingRef.current = false; }, 100);
       setSyncStatus(prev => ({
         ...prev,
         lastSyncedAt: new Date(),
@@ -125,7 +126,8 @@ export function useSync({
       clientVersionRef.current = version;
       isUpdatingRef.current = true;
       onContentReceived(content);
-      isUpdatingRef.current = false;
+      // Delay resetting flag to prevent triggering sync
+      setTimeout(() => { isUpdatingRef.current = false; }, 100);
       setSyncStatus(prev => ({
         ...prev,
         lastSyncedAt: new Date(),

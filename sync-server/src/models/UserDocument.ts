@@ -17,6 +17,11 @@ export class UserDocumentModel {
     return getDatabase();
   }
 
+  // Get current timestamp in ISO format (local time)
+  private getCurrentTimestamp(): string {
+    return new Date().toISOString();
+  }
+
   // Find document by user ID
   findByUserId(userId: number): UserDocument | undefined {
     const results = this.db.exec(`SELECT * FROM user_documents WHERE user_id = ${userId}`);
@@ -41,10 +46,11 @@ export class UserDocumentModel {
   create(doc: Omit<UserDocument, 'id' | 'created_at' | 'updated_at' | 'last_modified'>): UserDocument {
     const escapedContent = this.escapeString(doc.content);
     const escapedUsername = this.escapeString(doc.username);
+    const now = this.getCurrentTimestamp();
 
     this.db.exec(`
-      INSERT INTO user_documents (user_id, username, content, version)
-      VALUES (${doc.user_id}, '${escapedUsername}', '${escapedContent}', ${doc.version})
+      INSERT INTO user_documents (user_id, username, content, version, last_modified, created_at, updated_at)
+      VALUES (${doc.user_id}, '${escapedUsername}', '${escapedContent}', ${doc.version}, '${now}', '${now}', '${now}')
     `);
 
     saveDatabase();
@@ -67,12 +73,14 @@ export class UserDocumentModel {
 
     // Update document
     const escapedContent = this.escapeString(content);
+    const now = this.getCurrentTimestamp();
+
     this.db.exec(`
       UPDATE user_documents
       SET content = '${escapedContent}',
           version = version + 1,
-          updated_at = CURRENT_TIMESTAMP,
-          last_modified = CURRENT_TIMESTAMP
+          updated_at = '${now}',
+          last_modified = '${now}'
       WHERE user_id = ${userId} AND version = ${clientVersion}
     `);
 
@@ -88,12 +96,13 @@ export class UserDocumentModel {
 
     const escapedContent = this.escapeString(content);
     const versionIncrement = incrementVersion ? ', version = version + 1' : '';
+    const now = this.getCurrentTimestamp();
 
     this.db.exec(`
       UPDATE user_documents
       SET content = '${escapedContent}',
-          updated_at = CURRENT_TIMESTAMP,
-          last_modified = CURRENT_TIMESTAMP${versionIncrement}
+          updated_at = '${now}',
+          last_modified = '${now}'${versionIncrement}
       WHERE user_id = ${userId}
     `);
 
