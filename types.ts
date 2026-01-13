@@ -34,13 +34,14 @@ export interface Coordinates {
 }
 
 export interface User {
-  id: number;
-  username: string;
+  id: string;
+  name?: string;
+  email: string;
 }
 
 export interface LoginResponse {
-  message: string;
-  user: User;
+  message?: string;
+  user?: User;
 }
 
 // Sync types

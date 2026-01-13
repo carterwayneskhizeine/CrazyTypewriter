@@ -82,7 +82,7 @@ export default function App() {
   // Authentication state
   const [user, setUser] = useState<User | null>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [loginForm, setLoginForm] = useState({ username: '', password: '' });
+  const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -331,8 +331,8 @@ export default function App() {
   };
 
   const handleLogin = async () => {
-    if (!loginForm.username.trim() || !loginForm.password.trim()) {
-      setLoginError('Please enter username and password');
+    if (!loginForm.email.trim() || !loginForm.password.trim()) {
+      setLoginError('Please enter email and password');
       return;
     }
 
@@ -340,25 +340,70 @@ export default function App() {
     setLoginError('');
 
     try {
-      const response = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // CRITICAL for cookie handling
-        body: JSON.stringify({
-          username: loginForm.username,
-          password: loginForm.password,
-        }),
+      // Step 1: Get CSRF token
+      const csrfResponse = await fetch('/api/auth/csrf', {
+        credentials: 'include',
       });
 
-      const data = await response.json();
+      if (!csrfResponse.ok) {
+        throw new Error('Failed to get CSRF token');
+      }
 
-      if (response.ok) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-        setUser(data.user);
-        setShowLoginModal(false);
-        setLoginForm({ username: '', password: '' });
+      const csrfData = await csrfResponse.json();
+      const csrfToken = csrfData.csrfToken;
+
+      // Step 2: Login using fetch with manual redirect handling
+      const loginFormData = new URLSearchParams();
+      loginFormData.append('csrfToken', csrfToken);
+      loginFormData.append('email', loginForm.email);
+      loginFormData.append('password', loginForm.password);
+      // Don't set callbackUrl - let NextAuth use default
+      // Don't set json - we'll handle redirect manually
+
+      const response = await fetch('/api/auth/callback/credentials', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        credentials: 'include',
+        body: loginFormData,
+        redirect: 'manual', // Don't follow redirects automatically
+      });
+
+      // Step 3: Check if login was successful (redirect status)
+      if (response.type === 'opaqueredirect' || response.status === 302 || response.status === 301) {
+        // Login successful! The server set cookies and wants to redirect
+        // Instead of following redirect, we'll fetch session directly
+        const sessionResponse = await fetch('/api/auth/session', {
+          credentials: 'include',
+        });
+
+        if (sessionResponse.ok) {
+          const sessionData = await sessionResponse.json();
+          if (sessionData?.user) {
+            const userData: User = {
+              id: sessionData.user.id || sessionData.user.email,
+              email: sessionData.user.email,
+              name: sessionData.user.name,
+            };
+            localStorage.setItem('user', JSON.stringify(userData));
+            setUser(userData);
+            setShowLoginModal(false);
+            setLoginForm({ email: '', password: '' });
+          } else {
+            setLoginError('Login successful but failed to get user data');
+          }
+        } else {
+          setLoginError('Login successful but failed to get session');
+        }
       } else {
-        setLoginError(data.error || data.message || 'Login failed');
+        // Login failed - try to get error message
+        try {
+          const errorData = await response.json();
+          setLoginError(errorData.error || errorData.message || 'Login failed');
+        } catch {
+          setLoginError('Invalid email or password');
+        }
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -370,9 +415,11 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', {
+      await fetch('/api/auth/signout', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
+        body: JSON.stringify({ callbackUrl: window.location.origin }),
       });
     } catch (err) {
       console.error('Logout error:', err);
@@ -441,8 +488,8 @@ export default function App() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-user-id': user.id.toString(),
-          'x-username': user.username,
+          'x-user-id': user.id,
+          'x-username': user.email,
         },
         credentials: 'include',
       });
@@ -658,12 +705,12 @@ export default function App() {
             <button
               onClick={handleLogout}
               className={`${themeBtnClass} flex items-center gap-1.5`}
-              title={`Logout as ${user.username}`}
+              title={`Logout as ${user.email}`}
             >
               <span className={`text-xs ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'} ${
                 isTerminal ? 'text-terminal' : isVSCode ? 'text-[#d4d4d4]' : 'text-[#1a1a1a]'
               }`}>
-                {user.username}
+                {user.name || user.email}
               </span>
               <X className={`w-3 h-3 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`} />
             </button>
@@ -966,7 +1013,7 @@ export default function App() {
             onClick={() => {
               setShowLoginModal(false);
               setLoginError('');
-              setLoginForm({ username: '', password: '' });
+              setLoginForm({ email: '', password: '' });
             }}
           />
 
@@ -1004,18 +1051,18 @@ export default function App() {
                 </div>
               )}
 
-              {/* Username Input */}
+              {/* Email Input */}
               <input
-                type="text"
-                value={loginForm.username}
-                onChange={(e) => setLoginForm({ ...loginForm, username: e.target.value })}
+                type="email"
+                value={loginForm.email}
+                onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                 className={`w-full mb-4 ${
                   isTerminal ? 'login-input-terminal' :
                   isVSCode ? 'login-input-vscode' :
                   'login-input-modern'
                 }`}
-                placeholder={isTerminal ? 'ENTER USERNAME...' : 'Username'}
-                autoComplete="username"
+                placeholder={isTerminal ? 'ENTER EMAIL...' : 'Email'}
+                autoComplete="email"
                 autoFocus
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
@@ -1063,7 +1110,7 @@ export default function App() {
                 onClick={() => {
                   setShowLoginModal(false);
                   setLoginError('');
-                  setLoginForm({ username: '', password: '' });
+                  setLoginForm({ email: '', password: '' });
                 }}
                 className={`w-full mt-3 text-sm ${
                   isTerminal ? 'text-terminal-dim hover:text-terminal font-terminal' :

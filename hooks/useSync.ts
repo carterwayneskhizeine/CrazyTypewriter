@@ -81,9 +81,10 @@ export function useSync({
       reconnection: true,
       reconnectionAttempts: 5,
       reconnectionDelay: 1000,
+      withCredentials: true,
       auth: {
-        userId: user.id,
-        username: user.username
+        userId: parseInt(user.id, 10) || 1,
+        username: user.email
       }
     });
 

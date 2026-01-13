@@ -11,7 +11,8 @@ Gamified text editor with particle effects, screen shake, and combo tracking. Bu
 - Combo System with Dynamic HUD (follows cursor position)
 - 3 Themes: Retro Terminal, VS Code Modern, Modern Wild White
 - Markdown Preview, Copy to Clipboard, Send to Server
-- **User Authentication**: Login/logout with cookie-based session management
+- **User Authentication**: Login/logout with NextAuth 5 credentials provider
+- **Multi-Device Sync**: Real-time sync via WebSocket (requires login)
 - Responsive Design
 
 ## Tech Stack
@@ -27,28 +28,58 @@ Gamified text editor with particle effects, screen shake, and combo tracking. Bu
 - Uses `useState` + `useRef` for performance
 - **Critical:** Particles stored in `particlesRef.current` NOT `useState` to avoid render cycle overhead
 - Key state: `text`, `combo`, `config`, `caretY`, `hudSide`
-- **Authentication state**: `user`, `showLoginModal`, `loginForm`, `loginError`, `isLoggingIn`
+- **Authentication state**:
+  - `user: User | null` - Current logged-in user (null if not authenticated)
+  - `showLoginModal: boolean` - Controls login modal visibility
+  - `loginForm: { email, password }` - Login form input values
+  - `loginError: string` - Error message to display in modal
+  - `isLoggingIn: boolean` - Loading state during login process
 
 ### Authentication System
-**Cookie-based authentication** with localStorage session persistence:
+**NextAuth 5 Credentials Provider** with localStorage session persistence:
 
 **Login Flow:**
 1. User clicks Lock icon → modal opens
-2. Submit credentials to `/api/auth/login` (proxied via nginx)
-3. Backend sets HttpOnly cookie + returns user info
-4. User info stored in `localStorage` for session persistence
-5. Modal closes, Send button becomes visible
+2. Fetch CSRF token from `/api/auth/csrf`
+3. Submit email/password to `/api/auth/callback/credentials` with `redirect: 'manual'`
+4. Request includes: `{csrfToken, email, password}` (form-encoded)
+5. Check for `opaqueredirect` response type or 302/301 status (indicates success)
+6. On success, fetch user session from `/api/auth/session`
+7. Backend sets HttpOnly session cookie
+8. User info stored in `localStorage` for session persistence
+9. Modal closes, Send button becomes visible
+
+**No Page Redirect:**
+- Login completes without page refresh using `redirect: 'manual'`
+- Prevents NextAuth from redirecting to wrong URL
+- Session fetch happens client-side after successful login
 
 **Session Management:**
 - On app mount: check `localStorage` for stored user data
-- On logout: clear `localStorage` and call `/api/auth/logout`
+- On logout: clear `localStorage` and call `/api/auth/signout` with callbackUrl
 - Send API requires authentication (401 triggers re-login prompt)
 - All authenticated requests use `credentials: 'include'` to send cookies
 
+**User Data Structure:**
+```typescript
+interface User {
+  id: string;        // User ID (string for NextAuth)
+  email: string;     // User email (used for login)
+  name?: string;     // Optional display name
+}
+```
+
 **UI Components:**
-- **Login Button**: Lock icon (logged out) → Username + X icon (logged in)
+- **Login Button**: Lock icon (logged out) → Display name or email + X icon (logged in)
+  - Shows `user.name` if available, otherwise `user.email`
 - **Send Button**: Only visible when `user` state exists
-- **Login Modal**: Theme-specific styling (Terminal/VS Code/Modern), backdrop blur, Enter key support
+- **Undo Button**: Only visible when `user` state exists, requires authentication
+- **Sync Status**: Cloud icon with status dots (only visible when logged in)
+  - Green: Connected, Red: Disconnected, Yellow (pulsing): Pending changes
+- **Login Modal**: Email input (not username), theme-specific styling, backdrop blur, Enter key support
+  - Terminal theme: `[ LOGIN ]` header, green borders
+  - VS Code theme: Clean dark modal with blue accents
+  - Modern theme: White modal with gold borders
 
 ### Caret Tracking (utils/caret.ts)
 Uses **Mirror Div Strategy** to get exact cursor position:
@@ -85,11 +116,12 @@ Three themes in cyclic rotation: Terminal → VS Code → Modern → Terminal
 Colors differ per theme (green/blue/neon), Modern theme has expanded neon palette at higher levels.
 
 ## Key Files
-- `App.tsx` - Main component, state management, particle physics, authentication logic
-- `types.ts` - TypeScript interfaces (PowerConfig, Particle, User, LoginResponse)
+- `App.tsx` - Main component, state management, particle physics, NextAuth authentication logic
+- `types.ts` - TypeScript interfaces (PowerConfig, Particle, User, LoginResponse, SyncStatus)
 - `utils/caret.ts` - Cursor position tracking
 - `nginx/default.conf` - SPA routing + API proxy (`/api/` → external server via `POST_HOST` env var)
 - `docker-compose.yml` - Port mapping `5111:80`
+- `index.html` - Theme-specific login modal CSS styles (login-modal-*, login-input-*, login-btn-*)
 
 ## Important Development Notes
 
@@ -105,6 +137,12 @@ Colors differ per theme (green/blue/neon), Modern theme has expanded neon palett
 4. Add theme flag and update all conditional rendering
 5. Update theme toggle button logic
 6. Add CSS styles in `index.html` (cursor, buttons, scrollbar, markdown preview)
+7. **Add login modal CSS classes** for the new theme:
+   - `.login-modal-{themename}` - Main modal container
+   - `.login-header-{themename}` - Modal header
+   - `.login-input-{themename}` - Email/password input fields
+   - `.login-btn-{themename}` - Login button
+   - `.login-error-{themename}` - Error message display
 
 ### Adding New Levels
 1. Update `PowerLevel` enum in `types.ts`
@@ -118,15 +156,36 @@ Colors differ per theme (green/blue/neon), Modern theme has expanded neon palett
 ### Authentication Security
 **DO:**
 - Use `credentials: 'include'` for all authenticated requests (enables cookie handling)
-- Store only non-sensitive user info in `localStorage` (`{id, username}`)
-- Use `type="password"` for password inputs (masks input)
+- Use `redirect: 'manual'` in fetch to prevent NextAuth from redirecting to wrong URL
+- Check `response.type === 'opaqueredirect'` or status 302/301 to detect successful login
+- Store only non-sensitive user info in `localStorage` (`{id, email, name}`)
+- Use `type="email"` for email inputs and `type="password"` for password inputs
 - Let browser handle HttpOnly cookies automatically
+- Always fetch CSRF token before submitting login credentials
 
 **DON'T:**
 - Store passwords or session tokens in `localStorage` (security risk)
 - Manually extract or set cookies in JavaScript
 - Send credentials in URL parameters
 - Log passwords to console
+- Follow NextAuth's redirects automatically (causes navigation to wrong URL)
+
+**Error Handling:**
+- Invalid credentials: Show error message in modal (don't close modal)
+- Network errors: Show "Network error. Please try again." message
+- Session expired (401): Clear localStorage, show login modal with error
+- CSRF token fetch failure: Show "Network error" message
+- Session fetch after login: Show error but keep user in logging-in state
+
+**API Endpoints:**
+All proxied through nginx to `https://whitenote.goldie-rill.top`:
+
+- `GET /api/auth/csrf` - Get CSRF token for login
+- `POST /api/auth/callback/credentials` - Submit login credentials
+- `GET /api/auth/session` - Get current user session
+- `POST /api/auth/signout` - Logout user
+- `POST /api/messages` - Send message (requires authentication)
+- `POST /api/sync/documents/undo` - Undo to previous document version (requires authentication)
 
 ## Multi-Device Real-Time Sync
 
