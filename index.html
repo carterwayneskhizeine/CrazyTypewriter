@@ -11,10 +11,10 @@
         theme: {
           extend: {
             colors: {
-              'terminal-green': '#00ff00',
-              'terminal-green-dim': '#00cc00',
-              'terminal-dark': '#008800',
-              'terminal-black': '#050505',
+              'terminal-green': '#3b82f6',
+              'terminal-green-dim': '#60a5fa',
+              'terminal-dark': '#2563eb',
+              'terminal-black': '#0a0f1c',
               'modern-pink': '#ffd700',
               'modern-cyan': '#ffcc00',
               'modern-yellow': '#ffea00',
@@ -30,8 +30,8 @@
     <style>
       /* System Default Fonts */
       body {
-        background-color: #000000;
-        color: #33ff33;
+        background-color: #0f0f1a;
+        color: #818cf8;
         font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
         overflow-x: hidden;
       }
@@ -46,11 +46,11 @@
 
       /* CRT Screen Glow Effect */
       .crt-glow {
-        text-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00, 0 0 15px #00ff00, 0 0 20px #00ff00;
+        text-shadow: 0 0 5px #3b82f6, 0 0 10px #6366f1, 0 0 15px #8b5cf6, 0 0 20px #a855f7;
       }
 
       .crt-glow-subtle {
-        text-shadow: 0 0 3px #00ff00, 0 0 6px #00ff00;
+        text-shadow: 0 0 3px #3b82f6, 0 0 6px #8b5cf6;
       }
 
       /* CRT Scanlines Effect */
@@ -108,39 +108,41 @@
 
       /* Block Cursor for Textarea */
       .block-cursor {
-        caret-color: #33ff33;
+        caret-color: #60a5fa;
       }
 
       .block-cursor::selection {
-        background-color: #33ff33;
-        color: #000000;
+        background: linear-gradient(90deg, #3b82f6, #6366f1);
+        color: #ffffff;
       }
 
       /* ASCII Box Borders */
       .ascii-box {
-        border: 2px solid #33ff33;
-        box-shadow: 0 0 10px #33ff33, inset 0 0 5px rgba(51, 255, 51, 0.1);
+        border: 2px solid transparent;
+        border-image: linear-gradient(90deg, #3b82f6, #8b5cf6) 1;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 15px rgba(139, 92, 246, 0.3), inset 0 0 5px rgba(99, 102, 241, 0.1);
       }
 
       .ascii-box-dim {
-        border: 1px solid #008800;
-        box-shadow: 0 0 5px #008800;
+        border: 1px solid #2563eb;
+        box-shadow: 0 0 5px rgba(37, 99, 235, 0.5);
       }
 
       /* Terminal Button Style */
       .terminal-btn {
         background: transparent;
-        border: 2px solid #33ff33;
-        color: #33ff33;
-        text-shadow: 0 0 5px #33ff33;
+        border: 2px solid transparent;
+        border-image: linear-gradient(90deg, #3b82f6, #8b5cf6) 1;
+        color: #60a5fa;
+        text-shadow: 0 0 5px #3b82f6;
         transition: all 0.15s ease;
       }
 
       .terminal-btn:hover {
-        background: #33ff33;
-        color: #000000;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        color: #ffffff;
         text-shadow: none;
-        box-shadow: 0 0 20px #33ff33;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.6), 0 0 30px rgba(139, 92, 246, 0.4);
       }
 
       /* Terminal Input/Range Style */
@@ -149,9 +151,9 @@
         appearance: none;
         width: 100%;
         height: 4px;
-        background: #008800;
+        background: linear-gradient(90deg, #2563eb, #3b82f6, #6366f1, #8b5cf6);
         outline: none;
-        box-shadow: 0 0 5px #00ff00;
+        box-shadow: 0 0 5px rgba(59, 130, 246, 0.5);
       }
 
       .terminal-range::-webkit-slider-thumb {
@@ -159,35 +161,37 @@
         appearance: none;
         width: 16px;
         height: 16px;
-        background: #33ff33;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
         cursor: pointer;
-        box-shadow: 0 0 10px #33ff00, 0 0 20px #33ff00;
+        box-shadow: 0 0 10px #3b82f6, 0 0 20px #8b5cf6;
+        border-radius: 50%;
       }
 
       .terminal-range::-moz-range-thumb {
         width: 16px;
         height: 16px;
-        background: #33ff33;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
         cursor: pointer;
         border: none;
-        box-shadow: 0 0 10px #33ff00, 0 0 20px #33ff00;
+        box-shadow: 0 0 10px #3b82f6, 0 0 20px #8b5cf6;
+        border-radius: 50%;
       }
 
       /* Override text colors for terminal theme */
       .text-terminal {
-        color: #33ff33 !important;
+        color: #60a5fa !important;
       }
 
       .text-terminal-dim {
-        color: #00aa00 !important;
+        color: #3b82f6 !important;
       }
 
       .bg-terminal {
-        background-color: #000000 !important;
+        background-color: #0a0f1c !important;
       }
 
       .border-terminal {
-        border-color: #33ff33 !important;
+        border-color: #3b82f6 !important;
       }
 
       /* Shake Animations */
@@ -233,44 +237,44 @@
       }
 
       .terminal-scrollbar::-webkit-scrollbar-track {
-        background: #050505;
-        border: 1px solid #008800;
+        background: #0a0f1c;
+        border: 1px solid #2563eb;
       }
 
       .terminal-scrollbar::-webkit-scrollbar-thumb {
-        background: #00ff00;
-        border: 2px solid #008800;
-        box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+        background: linear-gradient(180deg, #3b82f6, #6366f1, #8b5cf6);
+        border: 2px solid #2563eb;
+        box-shadow: 0 0 5px #3b82f6, 0 0 10px #8b5cf6;
       }
 
       .terminal-scrollbar::-webkit-scrollbar-thumb:hover {
-        background: #33ff33;
-        box-shadow: 0 0 10px #00ff00, 0 0 15px #00ff00, 0 0 20px #00ff00;
+        background: linear-gradient(180deg, #60a5fa, #818cf8, #a78bfa);
+        box-shadow: 0 0 10px #3b82f6, 0 0 15px #8b5cf6, 0 0 20px #a855f7;
       }
 
       .terminal-scrollbar::-webkit-scrollbar-corner {
-        background: #050505;
+        background: #0a0f1c;
       }
 
       /* Retro Terminal Scrollbar - Firefox */
       .terminal-scrollbar {
         scrollbar-width: auto;
-        scrollbar-color: #00ff00 #050505;
+        scrollbar-color: #3b82f6 #0a0f1c;
       }
 
       .terminal-scrollbar::-moz-scrollbar-track {
-        background: #050505;
-        border: 1px solid #008800;
+        background: #0a0f1c;
+        border: 1px solid #2563eb;
       }
 
       .terminal-scrollbar::-moz-scrollbar-thumb {
-        background: #00ff00;
-        border: 2px solid #008800;
-        box-shadow: 0 0 5px #00ff00, 0 0 10px #00ff00;
+        background: linear-gradient(180deg, #3b82f6, #6366f1, #8b5cf6);
+        border: 2px solid #2563eb;
+        box-shadow: 0 0 5px #3b82f6, 0 0 10px #8b5cf6;
       }
 
       .terminal-scrollbar::-moz-scrollbar-thumb:hover {
-        background: #33ff33;
+        background: linear-gradient(180deg, #60a5fa, #818cf8, #a78bfa);
       }
 
       /* Markdown Preview Styles */
@@ -282,25 +286,29 @@
         font-size: 1.5em;
         font-weight: bold;
         margin: 0.5em 0;
-        border-bottom: 1px solid #33ff33;
+        border-bottom: 1px solid transparent;
+        border-image: linear-gradient(90deg, #3b82f6, #8b5cf6) 1;
         padding-bottom: 0.3em;
-        color: #33ff33;
+        background: linear-gradient(90deg, #60a5fa, #a78bfa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
       }
 
       .markdown-preview h2 {
         font-size: 1.25em;
         font-weight: bold;
         margin: 0.5em 0;
-        border-bottom: 1px dashed #00aa00;
+        border-bottom: 1px dashed #2563eb;
         padding-bottom: 0.2em;
-        color: #33ff33;
+        color: #60a5fa;
       }
 
       .markdown-preview h3 {
         font-size: 1.1em;
         font-weight: bold;
         margin: 0.5em 0;
-        color: #33ff33;
+        color: #60a5fa;
       }
 
       .markdown-preview p {
@@ -318,17 +326,18 @@
       }
 
       .markdown-preview code {
-        background-color: #001a00;
+        background: linear-gradient(135deg, #0f172a, #1e1b4b);
         padding: 0.1em 0.3em;
         border-radius: 3px;
         font-family: monospace;
-        color: #aaffaa;
-        border: 1px solid #008800;
+        color: #a78bfa;
+        border: 1px solid #2563eb;
       }
 
       .markdown-preview pre {
-        background-color: #001a00;
-        border: 1px solid #008800;
+        background: linear-gradient(135deg, #0f172a, #1e1b4b);
+        border: 1px solid transparent;
+        border-image: linear-gradient(135deg, #3b82f6, #8b5cf6) 1;
         padding: 1em;
         margin: 0.5em 0;
         overflow-x: auto;
@@ -342,25 +351,27 @@
       }
 
       .markdown-preview blockquote {
-        border-left: 3px solid #33ff33;
+        border-left: 3px solid transparent;
+        border-image: linear-gradient(180deg, #3b82f6, #8b5cf6) 1;
         margin: 0.5em 0;
         padding-left: 1em;
-        color: #00cc00;
+        color: #60a5fa;
       }
 
       .markdown-preview a {
-        color: #aaffaa;
+        color: #818cf8;
         text-decoration: underline;
       }
 
       .markdown-preview a:hover {
         color: #ffffff;
-        text-shadow: 0 0 10px #00ff00;
+        text-shadow: 0 0 10px #3b82f6, 0 0 15px #8b5cf6;
       }
 
       .markdown-preview hr {
         border: none;
-        border-top: 1px dashed #008800;
+        border-top: 1px dashed;
+        border-image: linear-gradient(90deg, #2563eb, #7c3aed) 1;
         margin: 1em 0;
       }
 
@@ -371,12 +382,12 @@
       }
 
       .markdown-preview th, .markdown-preview td {
-        border: 1px solid #008800;
+        border: 1px solid #2563eb;
         padding: 0.5em;
       }
 
       .markdown-preview th {
-        background-color: #001a00;
+        background: linear-gradient(135deg, #0f172a, #1e1b4b);
         font-weight: bold;
       }
 
@@ -996,32 +1007,33 @@
       /* Mermaid Diagram Styles - Terminal Theme */
       .terminal .mermaid,
       .markdown-preview .mermaid {
-        background-color: #000000 !important;
+        background: linear-gradient(135deg, #0a0f1c, #0f172a) !important;
         padding: 10px;
         border-radius: 4px;
-        border: 1px solid #33ff33;
-        box-shadow: 0 0 10px rgba(51, 255, 51, 0.3);
+        border: 1px solid transparent;
+        border-image: linear-gradient(135deg, #3b82f6, #8b5cf6) 1;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.3), 0 0 20px rgba(139, 92, 246, 0.2);
       }
 
       .terminal .mermaid .node rect,
       .terminal .mermaid .node circle,
       .terminal .mermaid .node ellipse,
       .terminal .mermaid .node polygon {
-        stroke: #33ff33;
-        fill: #001a00;
+        stroke: #3b82f6;
+        fill: linear-gradient(135deg, #0f172a, #1e1b4b);
       }
 
       .terminal .mermaid .edgePath .path {
-        stroke: #33ff33;
+        stroke: #60a5fa;
       }
 
       .terminal .mermaid .cluster rect {
-        stroke: #008800;
-        fill: #000000;
+        stroke: #2563eb;
+        fill: #0a0f1c;
       }
 
       .terminal .mermaid .arrowheadPath {
-        fill: #33ff33;
+        fill: #60a5fa;
       }
 
       /* Mermaid Diagram Styles - VS Code Theme */
@@ -1087,21 +1099,23 @@
 
       /* --- Terminal Modal --- */
       .login-modal-terminal {
-        background: #000000;
-        border: 2px solid #33ff33;
-        box-shadow: 0 0 20px rgba(0, 255, 0, 0.5), inset 0 0 20px rgba(0, 255, 0, 0.1);
+        background: #0a0f1c;
+        border: 2px solid transparent;
+        border-image: linear-gradient(135deg, #3b82f6, #8b5cf6) 1;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.5), 0 0 30px rgba(139, 92, 246, 0.3), inset 0 0 20px rgba(99, 102, 241, 0.1);
       }
 
       .login-header-terminal {
-        background: #050505;
-        border-bottom: 2px solid #33ff33;
+        background: linear-gradient(90deg, #0a0f1c, #0f172a);
+        border-bottom: 2px solid transparent;
+        border-image: linear-gradient(90deg, #3b82f6, #8b5cf6) 1;
         padding: 1rem 1.5rem;
       }
 
       .login-input-terminal {
-        background: #000000;
-        border: 2px solid #00cc00;
-        color: #00ff00;
+        background: #0a0f1c;
+        border: 2px solid #2563eb;
+        color: #60a5fa;
         padding: 0.75rem;
         font-family: "Microsoft YaHei Light", monospace;
         font-size: 1rem;
@@ -1110,14 +1124,15 @@
 
       .login-input-terminal:focus {
         outline: none;
-        border-color: #33ff33;
-        box-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+        border-color: #8b5cf6;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 15px rgba(139, 92, 246, 0.3);
       }
 
       .login-btn-terminal {
         background: transparent;
-        border: 2px solid #33ff33;
-        color: #33ff33;
+        border: 2px solid transparent;
+        border-image: linear-gradient(90deg, #3b82f6, #8b5cf6) 1;
+        color: #60a5fa;
         padding: 0.75rem;
         font-family: "Microsoft YaHei Light", monospace;
         font-size: 1rem;
@@ -1126,13 +1141,13 @@
       }
 
       .login-btn-terminal:hover:not(:disabled) {
-        background: #33ff33;
-        color: #000000;
+        background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        color: #ffffff;
       }
 
       .login-error-terminal {
-        color: #ff3333;
-        text-shadow: 0 0 5px #ff0000;
+        color: #f87171;
+        text-shadow: 0 0 5px #ef4444;
         font-family: "Microsoft YaHei Light", monospace;
       }
 

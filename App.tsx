@@ -18,12 +18,12 @@ const DEFAULT_CONFIG: PowerConfig = {
   spawnHeightOffset: 5,
 };
 
-// Colors for different levels - Terminal Green Theme
+// Colors for different levels - Terminal Blue-Purple Gradient Theme (Gemini CLI style)
 const TERMINAL_LEVEL_COLORS = {
-  [PowerLevel.None]: ['#006600', '#008800'], // Dim Green
-  [PowerLevel.Power]: ['#00cc00', '#00dd00', '#00ff00', '#33ff33'], // Green shades
-  [PowerLevel.SuperPower]: ['#00ff00', '#33ff33', '#66ff66', '#aaffaa'], // Bright Green/White-ish
-  [PowerLevel.ManyPower]: ['#00ff00', '#33ff33', '#aaffaa', '#ffffff'], // Intense Green/White
+  [PowerLevel.None]: ['#1d4ed8', '#2563eb'], // Dim Blue
+  [PowerLevel.Power]: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7'], // Blue to Purple gradient
+  [PowerLevel.SuperPower]: ['#60a5fa', '#818cf8', '#a78bfa', '#c084fc'], // Bright Blue-Purple
+  [PowerLevel.ManyPower]: ['#3b82f6', '#8b5cf6', '#c084fc', '#ffffff'], // Intense Blue-Purple-White
 };
 
 // Colors for different levels - VS Code Blue Theme
@@ -538,9 +538,9 @@ export default function App() {
     if (isTerminal) {
       switch (currentLevel) {
         case PowerLevel.ManyPower: return 'crt-glow text-white';
-        case PowerLevel.SuperPower: return 'crt-glow text-[#aaffaa]';
+        case PowerLevel.SuperPower: return 'crt-glow text-[#a78bfa]';
         case PowerLevel.Power: return 'crt-glow-subtle text-terminal';
-        default: return 'text-[#006600]';
+        default: return 'text-[#2563eb]';
       }
     } else if (isVSCode) {
       switch (currentLevel) {
@@ -562,32 +562,32 @@ export default function App() {
 
   // Theme-based color helpers
   const getPrimaryColor = () => {
-    if (themeMode === 'terminal') return '#33ff33';
+    if (themeMode === 'terminal') return '#60a5fa'; // Blue primary
     if (themeMode === 'vscode') return '#d4d4d4';
     return '#1a1a1a'; // Modern - dark gray-black
   };
   const getSecondaryColor = () => {
-    if (themeMode === 'terminal') return '#008800';
+    if (themeMode === 'terminal') return '#2563eb'; // Dark blue
     if (themeMode === 'vscode') return '#858585';
     return '#666666'; // Modern - medium gray
   };
   const getAccentColor = () => {
-    if (themeMode === 'terminal') return '#00ff00';
+    if (themeMode === 'terminal') return '#8b5cf6'; // Purple accent (right side)
     if (themeMode === 'vscode') return '#007acc';
     return '#ffd700'; // Modern - gold/yellow
   };
   const getBgColor = () => {
-    if (themeMode === 'terminal') return '#000000';
+    if (themeMode === 'terminal') return '#0a0f1c'; // Dark blue-black background
     if (themeMode === 'vscode') return '#1e1e1e';
     return '#fffde7'; // Modern - pale yellow
   };
   const getBorderColor = () => {
-    if (themeMode === 'terminal') return '#33ff33';
+    if (themeMode === 'terminal') return '#3b82f6'; // Blue border (left side)
     if (themeMode === 'vscode') return '#3c3c3c';
     return '#e0e0e0'; // Modern - light gray border
   };
   const getHeaderBgColor = () => {
-    if (themeMode === 'terminal') return '#050505';
+    if (themeMode === 'terminal') return '#0a0f1c'; // Dark blue-black header
     if (themeMode === 'vscode') return '#252526';
     return '#fafafa'; // Modern - off-white header
   };
@@ -623,7 +623,7 @@ export default function App() {
   })();
 
   const textareaClass = (() => {
-    if (isTerminal) return 'block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-terminal text-terminal focus:outline-none resize-none leading-relaxed selection:bg-terminal selection:text-black';
+    if (isTerminal) return 'block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-terminal text-terminal focus:outline-none resize-none leading-relaxed selection:bg-terminal selection:text-white';
     if (isVSCode) return 'vscode-cursor vscode-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-mono text-[#d4d4d4] focus:outline-none resize-none leading-relaxed selection:bg-[#007acc] selection:text-white rounded-md';
     return 'modern-cursor modern-scrollbar w-full h-full bg-transparent border-0 p-8 text-lg sm:text-sm font-sans text-[#1a1a1a] focus:outline-none resize-none leading-relaxed selection:bg-[#ffd700] selection:text-black rounded-lg';
   })();
@@ -695,7 +695,7 @@ export default function App() {
           {/* Sync Status Indicator - Only show when logged in */}
           {user && syncStatus && (
             <div className="flex items-center gap-1.5" title={`Last synced: ${syncStatus.lastSyncedAt ? new Date(syncStatus.lastSyncedAt).toLocaleTimeString() : 'Never'}`}>
-              <div className={`w-2 h-2 rounded-full ${syncStatus.connected ? 'bg-green-500' : 'bg-red-500'} ${syncStatus.syncing ? 'animate-pulse' : ''}`} />
+              <div className={`w-2 h-2 rounded-full ${syncStatus.connected ? (isTerminal ? 'bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6]' : 'bg-green-500') : 'bg-red-500'} ${syncStatus.syncing ? 'animate-pulse' : ''}`} />
               {syncStatus.pendingChanges && <div className="w-2 h-2 rounded-full bg-yellow-500 animate-ping" />}
               <Cloud className={`w-3.5 h-3.5 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#858585]' : 'text-[#999999]'} ${syncStatus.syncing ? 'animate-pulse' : ''}`} />
             </div>
