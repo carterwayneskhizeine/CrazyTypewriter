@@ -539,9 +539,9 @@ export default function App() {
     if (isTerminal) {
       switch (currentLevel) {
         case PowerLevel.ManyPower: return 'crt-glow text-white';
-        case PowerLevel.SuperPower: return 'crt-glow text-[#a78bfa]';
-        case PowerLevel.Power: return 'crt-glow-subtle text-terminal';
-        default: return 'text-[#2563eb]';
+        case PowerLevel.SuperPower: return 'crt-glow text-white';
+        case PowerLevel.Power: return 'crt-glow-subtle text-white';
+        default: return 'text-white';
       }
     } else if (isVSCode) {
       switch (currentLevel) {
