@@ -624,17 +624,15 @@ export default function App() {
   })();
 
   const textareaClass = (() => {
-    const fontSizeStyle = `font-size: ${config.fontSize}px`;
-    if (isTerminal) return `block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8 font-terminal text-terminal focus:outline-none resize-none leading-relaxed selection:bg-terminal selection:text-white ${fontSizeStyle}`;
-    if (isVSCode) return `vscode-cursor vscode-scrollbar w-full h-full bg-transparent border-0 p-8 font-mono text-[#d4d4d4] focus:outline-none resize-none leading-relaxed selection:bg-[#007acc] selection:text-white rounded-md ${fontSizeStyle}`;
-    return `modern-cursor modern-scrollbar w-full h-full bg-transparent border-0 p-8 font-sans text-[#1a1a1a] focus:outline-none resize-none leading-relaxed selection:bg-[#ffd700] selection:text-black rounded-lg ${fontSizeStyle}`;
+    if (isTerminal) return 'block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8 font-terminal text-terminal focus:outline-none resize-none leading-relaxed selection:bg-terminal selection:text-white';
+    if (isVSCode) return 'vscode-cursor vscode-scrollbar w-full h-full bg-transparent border-0 p-8 font-mono text-[#d4d4d4] focus:outline-none resize-none leading-relaxed selection:bg-[#007acc] selection:text-white rounded-md';
+    return 'modern-cursor modern-scrollbar w-full h-full bg-transparent border-0 p-8 font-sans text-[#1a1a1a] focus:outline-none resize-none leading-relaxed selection:bg-[#ffd700] selection:text-black rounded-lg';
   })();
 
   const previewClass = (() => {
-    const fontSizeStyle = `font-size: ${config.fontSize}px`;
-    if (isTerminal) return `terminal-scrollbar w-full h-full bg-transparent border-0 p-8 font-terminal text-terminal leading-relaxed markdown-preview ${fontSizeStyle}`;
-    if (isVSCode) return `vscode-scrollbar w-full h-full bg-transparent border-0 p-8 font-mono text-[#d4d4d4] leading-relaxed vscode-markdown-preview ${fontSizeStyle}`;
-    return `modern-scrollbar w-full h-full bg-transparent border-0 p-8 font-sans text-[#1a1a1a] leading-relaxed modern-markdown-preview ${fontSizeStyle}`;
+    if (isTerminal) return 'terminal-scrollbar w-full h-full bg-transparent border-0 p-8 font-terminal text-terminal leading-relaxed markdown-preview';
+    if (isVSCode) return 'vscode-scrollbar w-full h-full bg-transparent border-0 p-8 font-mono text-[#d4d4d4] leading-relaxed vscode-markdown-preview';
+    return 'modern-scrollbar w-full h-full bg-transparent border-0 p-8 font-sans text-[#1a1a1a] leading-relaxed modern-markdown-preview';
   })();
 
   const editorWrapperClass = (() => {
@@ -868,11 +866,11 @@ export default function App() {
               spellCheck={false}
               className={textareaClass}
               placeholder={isTerminal ? "// START TYPING TO CHARGE YOUR POWER..." : isVSCode ? "// Start typing to charge your power..." : "// Start typing to unleash your power..."}
-              style={{ display: viewMode === 'edit' ? 'block' : 'none' }}
+              style={{ display: viewMode === 'edit' ? 'block' : 'none', fontSize: `${config.fontSize}px` }}
             />
             <div
               className={previewClass}
-              style={{ display: viewMode === 'preview' ? 'block' : 'none' }}
+              style={{ display: viewMode === 'preview' ? 'block' : 'none', fontSize: `${config.fontSize}px` }}
             >
               <ReactMarkdown remarkPlugins={[remarkMermaid]} rehypePlugins={[rehypeRaw]}>{text}</ReactMarkdown>
             </div>
@@ -911,13 +909,13 @@ export default function App() {
           <div className="space-y-4">
             <ControlGroup label="FONT SIZE" themeMode={themeMode}>
               <input
-                type="range" min="12" max="32" step="1"
+                type="range" min="8" max="32" step="1"
                 value={config.fontSize}
                 onChange={(e) => setConfig({...config, fontSize: Number(e.target.value)})}
                 className={rangeInputClass}
               />
               <div className={`flex justify-between text-xs mt-1 ${isTerminal ? 'text-terminal-dim font-terminal' : isVSCode ? 'text-[#858585] font-mono' : 'text-[#999999] font-sans'}`}>
-                <span>[12px]</span>
+                <span>[8px]</span>
                 <span className={isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700] font-bold'}>[{config.fontSize}px]</span>
                 <span>[32px]</span>
               </div>
