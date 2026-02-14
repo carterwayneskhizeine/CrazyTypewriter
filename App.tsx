@@ -21,10 +21,10 @@ const DEFAULT_CONFIG: PowerConfig = {
 
 // Colors for different levels - Terminal Blue-Purple Gradient Theme (Gemini CLI style)
 const TERMINAL_LEVEL_COLORS = {
-  [PowerLevel.None]: ['#1d4ed8', '#2563eb'], // Dim Blue
-  [PowerLevel.Power]: ['#3b82f6', '#6366f1', '#8b5cf6', '#a855f7'], // Blue to Purple gradient
-  [PowerLevel.SuperPower]: ['#60a5fa', '#818cf8', '#a78bfa', '#c084fc'], // Bright Blue-Purple
-  [PowerLevel.ManyPower]: ['#3b82f6', '#8b5cf6', '#c084fc', '#ffffff'], // Intense Blue-Purple-White
+  [PowerLevel.None]: ['#e0e0e0', '#f0f0f0'], // Dim White
+  [PowerLevel.Power]: ['#f5f5f5', '#fafafa', '#ffffff', '#ffffff'], // White gradient
+  [PowerLevel.SuperPower]: ['#ffffff', '#ffffff', '#ffffff', '#ffffff'], // Bright White
+  [PowerLevel.ManyPower]: ['#ffffff', '#ffffff', '#ffffff', '#ffffff'], // Intense White
 };
 
 // Colors for different levels - VS Code Blue Theme
