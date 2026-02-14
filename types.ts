@@ -6,6 +6,7 @@ export interface PowerConfig {
   life: number;
   shakeIntensity: number;
   spawnHeightOffset: number;
+  fontSize: number;
 }
 
 export enum PowerLevel {

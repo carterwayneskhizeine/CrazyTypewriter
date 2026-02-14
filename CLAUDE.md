@@ -1,6 +1,6 @@
 # Power Mode Typer - Developer Guide
 
-**Startup:** `docker-compose up -d --build` (do NOT use npm)
+**Startup:** `docker compose up -d --build` (do NOT use npm)
 
 ## Project Overview
 Gamified text editor with particle effects, screen shake, and combo tracking. Built with React 19, TypeScript, Tailwind CSS.
