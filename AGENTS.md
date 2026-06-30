@@ -89,7 +89,7 @@ Colors differ per theme (green/blue/neon), Modern theme has expanded neon palett
 - `types.ts` - TypeScript interfaces (PowerConfig, Particle, User, LoginResponse)
 - `utils/caret.ts` - Cursor position tracking
 - `nginx/default.conf` - SPA routing + API proxy (`/api/` → external server via `POST_HOST` env var)
-- `docker-compose.yml` - Port mapping `5111:80`
+- `docker-compose.yml` - Port mapping `15111:80`
 
 ## Important Development Notes
 
