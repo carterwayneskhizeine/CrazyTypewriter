@@ -11,6 +11,7 @@ Gamified text editor with particle effects, screen shake, and combo tracking. Bu
 - Combo System with Dynamic HUD (follows cursor position)
 - 3 Themes: Retro Terminal, VS Code Modern, Modern Wild White
 - Markdown Preview, Copy to Clipboard, Send to Server
+- **Markdown stack**: `react-markdown` + `remark-gfm` (tables/strikethrough/task lists) + `rehype-raw` + `rehype-highlight` (syntax colors in `index.html` per theme); ```mermaid fences render via `components/MermaidDiagram.tsx` (zoom/fullscreen viewer). Preview only mounts in preview mode (typing performance).
 - **User Authentication**: Login/logout with NextAuth 5 credentials provider
 - **Multi-Device Sync**: Real-time sync via WebSocket (requires login)
 - Responsive Design
@@ -119,6 +120,8 @@ Colors differ per theme (green/blue/neon), Modern theme has expanded neon palett
 - `App.tsx` - Main component, state management, particle physics, NextAuth authentication logic
 - `types.ts` - TypeScript interfaces (PowerConfig, Particle, User, LoginResponse, SyncStatus)
 - `utils/caret.ts` - Cursor position tracking
+- `utils/mermaidViewer.ts` - Plain-DOM mermaid renderer with zoom/pan/fullscreen (mermaid v12, dynamic import)
+- `components/MermaidDiagram.tsx` - React wrapper for mermaidViewer, wired via ReactMarkdown `pre` override
 - `nginx/default.conf` - SPA routing + API proxy (`/api/` → external server via `POST_HOST` env var)
 - `docker-compose.yml` - Port mapping `5111:80`
 - `index.html` - Theme-specific login modal CSS styles (login-modal-*, login-input-*, login-btn-*)

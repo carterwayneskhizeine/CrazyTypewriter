@@ -391,6 +391,24 @@
         font-weight: bold;
       }
 
+      /* Terminal Syntax Highlighting (monochrome CRT palette) */
+      .markdown-preview .hljs-comment, .markdown-preview .hljs-quote { color: #7a7a7a; font-style: italic; }
+      .markdown-preview .hljs-keyword, .markdown-preview .hljs-selector-tag, .markdown-preview .hljs-literal, .markdown-preview .hljs-section, .markdown-preview .hljs-doctag, .markdown-preview .hljs-name { color: #ffffff; font-weight: bold; }
+      .markdown-preview .hljs-string, .markdown-preview .hljs-regexp, .markdown-preview .hljs-addition { color: #d4d4d4; }
+      .markdown-preview .hljs-number, .markdown-preview .hljs-symbol, .markdown-preview .hljs-bullet, .markdown-preview .hljs-link { color: #e0e0e0; }
+      .markdown-preview .hljs-title, .markdown-preview .hljs-title.function_ { color: #ffffff; }
+      .markdown-preview .hljs-title.class_, .markdown-preview .hljs-type, .markdown-preview .hljs-built_in { color: #e0e0e0; }
+      .markdown-preview .hljs-attr, .markdown-preview .hljs-attribute, .markdown-preview .hljs-variable, .markdown-preview .hljs-template-variable, .markdown-preview .hljs-property { color: #cccccc; }
+      .markdown-preview .hljs-meta, .markdown-preview .hljs-punctuation { color: #aaaaaa; }
+      .markdown-preview .hljs-deletion { color: #cccccc; background: rgba(255, 255, 255, 0.08); }
+      .markdown-preview .hljs-emphasis { font-style: italic; }
+      .markdown-preview .hljs-strong { font-weight: bold; }
+
+      /* Terminal GFM Extras */
+      .markdown-preview del { color: #888888; }
+      .markdown-preview li.task-list-item { list-style: none; }
+      .markdown-preview li.task-list-item input[type='checkbox'] { accent-color: #ffffff; margin-right: 0.5em; vertical-align: middle; }
+
       /* ========== VS CODE THEME STYLES ========== */
 
       /* VS Code Cursor - Modern thin line cursor */
@@ -633,6 +651,24 @@
       .vscode-markdown-preview tr:nth-child(even) {
         background-color: rgba(255, 255, 255, 0.02);
       }
+
+      /* VS Code Syntax Highlighting (Dark+ palette) */
+      .vscode-markdown-preview .hljs-comment, .vscode-markdown-preview .hljs-quote { color: #6a9955; }
+      .vscode-markdown-preview .hljs-keyword, .vscode-markdown-preview .hljs-selector-tag, .vscode-markdown-preview .hljs-literal, .vscode-markdown-preview .hljs-doctag, .vscode-markdown-preview .hljs-name { color: #569cd6; }
+      .vscode-markdown-preview .hljs-string, .vscode-markdown-preview .hljs-regexp, .vscode-markdown-preview .hljs-addition { color: #ce9178; }
+      .vscode-markdown-preview .hljs-number, .vscode-markdown-preview .hljs-symbol, .vscode-markdown-preview .hljs-bullet, .vscode-markdown-preview .hljs-link { color: #b5cea8; }
+      .vscode-markdown-preview .hljs-title, .vscode-markdown-preview .hljs-title.function_, .vscode-markdown-preview .hljs-meta { color: #dcdcaa; }
+      .vscode-markdown-preview .hljs-title.class_, .vscode-markdown-preview .hljs-type, .vscode-markdown-preview .hljs-built_in { color: #4ec9b0; }
+      .vscode-markdown-preview .hljs-attr, .vscode-markdown-preview .hljs-attribute, .vscode-markdown-preview .hljs-variable, .vscode-markdown-preview .hljs-template-variable, .vscode-markdown-preview .hljs-property { color: #9cdcfe; }
+      .vscode-markdown-preview .hljs-section { color: #c586c0; font-weight: bold; }
+      .vscode-markdown-preview .hljs-deletion { color: #f14c4c; }
+      .vscode-markdown-preview .hljs-emphasis { font-style: italic; }
+      .vscode-markdown-preview .hljs-strong { font-weight: bold; }
+
+      /* VS Code GFM Extras */
+      .vscode-markdown-preview del { color: #808080; }
+      .vscode-markdown-preview li.task-list-item { list-style: none; }
+      .vscode-markdown-preview li.task-list-item input[type='checkbox'] { accent-color: #007acc; margin-right: 0.5em; vertical-align: middle; }
 
       /* ========== MODERN WILD WHITE THEME STYLES ========== */
 
@@ -1003,6 +1039,25 @@
       .modern-markdown-preview tr:hover {
         background-color: rgba(255, 215, 0, 0.03);
       }
+
+      /* Modern Syntax Highlighting (gold-accented light palette) */
+      .modern-markdown-preview .hljs-comment, .modern-markdown-preview .hljs-quote { color: #a8a8a0; font-style: italic; }
+      .modern-markdown-preview .hljs-keyword, .modern-markdown-preview .hljs-selector-tag, .modern-markdown-preview .hljs-literal, .modern-markdown-preview .hljs-doctag, .modern-markdown-preview .hljs-name { color: #c98200; font-weight: 600; }
+      .modern-markdown-preview .hljs-string, .modern-markdown-preview .hljs-regexp, .modern-markdown-preview .hljs-addition { color: #2e7d32; }
+      .modern-markdown-preview .hljs-number, .modern-markdown-preview .hljs-symbol, .modern-markdown-preview .hljs-bullet, .modern-markdown-preview .hljs-link { color: #00796b; }
+      .modern-markdown-preview .hljs-title, .modern-markdown-preview .hljs-title.function_ { color: #9a6700; font-weight: 600; }
+      .modern-markdown-preview .hljs-title.class_, .modern-markdown-preview .hljs-type, .modern-markdown-preview .hljs-built_in { color: #8a5a00; }
+      .modern-markdown-preview .hljs-attr, .modern-markdown-preview .hljs-attribute, .modern-markdown-preview .hljs-variable, .modern-markdown-preview .hljs-template-variable, .modern-markdown-preview .hljs-property { color: #7c5c10; }
+      .modern-markdown-preview .hljs-meta, .modern-markdown-preview .hljs-punctuation { color: #808080; }
+      .modern-markdown-preview .hljs-section { color: #b8860b; font-weight: 600; }
+      .modern-markdown-preview .hljs-deletion { color: #d1242f; background: rgba(209, 36, 47, 0.06); }
+      .modern-markdown-preview .hljs-emphasis { font-style: italic; }
+      .modern-markdown-preview .hljs-strong { font-weight: bold; }
+
+      /* Modern GFM Extras */
+      .modern-markdown-preview del { color: #999999; }
+      .modern-markdown-preview li.task-list-item { list-style: none; }
+      .modern-markdown-preview li.task-list-item input[type='checkbox'] { accent-color: #ffd700; margin-right: 0.5em; vertical-align: middle; }
 
       /* Mermaid Diagram Styles - Terminal Theme */
       .terminal .mermaid,

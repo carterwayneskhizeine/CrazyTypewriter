@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun, Lock, Cloud, Undo } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
-import remarkMermaid from 'remark-mermaid-plugin';
+import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+import rehypeHighlight from 'rehype-highlight';
+import { MermaidDiagram } from './components/MermaidDiagram';
 import { getCaretCoordinates } from './utils/caret';
 import { PowerConfig, Particle, PowerLevel, User, SyncStatus } from './types';
 import { useSync } from './hooks/useSync';
@@ -59,6 +61,18 @@ const COMBO_THRESHOLDS = {
   MANY: 60,
 };
 
+// Detect a ```mermaid code fence inside a <pre> element and return its source
+const extractMermaidCode = (children: React.ReactNode): string | null => {
+  const child = Array.isArray(children) ? children[0] : children;
+  if (!React.isValidElement(child)) return null;
+  const props = child.props as { className?: unknown; children?: unknown };
+  if (typeof props.className !== 'string' || !props.className.includes('language-mermaid')) {
+    return null;
+  }
+  const inner = props.children;
+  return Array.isArray(inner) ? inner.join('') : String(inner ?? '');
+};
+
 // Helper for random range
 const random = (min: number, max: number) => Math.random() * (max - min) + min;
 
@@ -104,22 +118,6 @@ export default function App() {
   // WhiteNote workspace selector (send target)
   const { workspaces, loading: workspacesLoading, selectedWorkspaceId, setSelectedWorkspaceId } = useWorkspaces({ user });
 
-  // Initialize Mermaid after component mounts
-  useEffect(() => {
-    const initializeMermaid = async () => {
-      if (typeof window !== 'undefined' && window.mermaid) {
-        window.mermaid.initialize({
-          startOnLoad: false,
-          theme: themeMode === 'terminal' ? 'dark' : themeMode === 'vscode' ? 'dark' : 'default',
-          securityLevel: 'loose',
-          fontFamily: themeMode === 'terminal' ? 'monospace' : themeMode === 'vscode' ? 'Consolas, "Courier New", monospace' : 'system-ui, -apple-system, sans-serif'
-        });
-      }
-    };
-
-    initializeMermaid();
-  }, [themeMode]);
-
   // Check for existing session on mount
   useEffect(() => {
     const checkSession = () => {
@@ -136,19 +134,6 @@ export default function App() {
     checkSession();
   }, []);
 
-  // Render Mermaid diagrams when text changes and in preview mode
-  useEffect(() => {
-    if (viewMode === 'preview' && typeof window !== 'undefined' && window.mermaid) {
-      // Wait for DOM to update before rendering Mermaid diagrams
-      setTimeout(() => {
-        window.mermaid.run({
-          querySelector: '.mermaid',
-          suppressErrors: true
-        }).catch(console.error);
-      }, 100);
-    }
-  }, [text, viewMode]);
-  
   // Refs for engine
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const particlesRef = useRef<Particle[]>([]);
@@ -885,7 +870,23 @@ export default function App() {
               className={previewClass}
               style={{ display: viewMode === 'preview' ? 'block' : 'none', fontSize: `${config.fontSize}px` }}
             >
-              <ReactMarkdown remarkPlugins={[remarkMermaid]} rehypePlugins={[rehypeRaw]}>{text}</ReactMarkdown>
+              {viewMode === 'preview' && (
+                <ReactMarkdown
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw, rehypeHighlight]}
+                  components={{
+                    pre: ({ children }) => {
+                      const mermaidCode = extractMermaidCode(children);
+                      if (mermaidCode !== null) {
+                        return <MermaidDiagram code={mermaidCode} theme={themeMode} />;
+                      }
+                      return <pre>{children}</pre>;
+                    },
+                  }}
+                >
+                  {text}
+                </ReactMarkdown>
+              )}
             </div>
 
             <div className={`absolute bottom-4 right-4 text-sm font-mono pointer-events-none ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#999999]'}`}>
