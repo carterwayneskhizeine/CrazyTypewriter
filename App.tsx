@@ -6,6 +6,7 @@ import rehypeRaw from 'rehype-raw';
 import { getCaretCoordinates } from './utils/caret';
 import { PowerConfig, Particle, PowerLevel, User, SyncStatus } from './types';
 import { useSync } from './hooks/useSync';
+import { useWorkspaces } from './hooks/useWorkspaces';
 
 // Default Configurations
 const DEFAULT_CONFIG: PowerConfig = {
@@ -99,6 +100,9 @@ export default function App() {
     onContentReceived: handleContentReceived,
     debounceMs: parseInt(import.meta.env.VITE_SYNC_DEBOUNCE_MS || '5000', 10)
   });
+
+  // WhiteNote workspace selector (send target)
+  const { workspaces, loading: workspacesLoading, selectedWorkspaceId, setSelectedWorkspaceId } = useWorkspaces({ user });
 
   // Initialize Mermaid after component mounts
   useEffect(() => {
@@ -451,7 +455,7 @@ export default function App() {
           'Content-Type': 'application/json',
         },
         credentials: 'include', // REQUIRED for auth
-        body: JSON.stringify({ content: text }),
+        body: JSON.stringify({ content: text, workspaceId: selectedWorkspaceId }),
       });
 
       if (response.ok) {
@@ -655,6 +659,12 @@ export default function App() {
     if (isTerminal) return 'w-full terminal-range';
     if (isVSCode) return 'w-full vscode-range';
     return 'w-full modern-range';
+  })();
+
+  const workspaceSelectClass = (() => {
+    if (isTerminal) return 'w-full px-2 py-2 bg-black/40 border border-terminal-dim text-terminal font-terminal text-sm rounded-none focus:outline-none focus:border-terminal cursor-pointer';
+    if (isVSCode) return 'w-full px-2 py-2 bg-[#3c3c3c] border border-[#3c3c3c] text-[#d4d4d4] font-mono text-sm rounded focus:outline-none focus:border-[#007acc] cursor-pointer';
+    return 'w-full px-2 py-2 bg-white border border-[#e0e0e0] text-[#1a1a1a] font-sans text-sm rounded focus:outline-none focus:border-[#ffd700] cursor-pointer';
   })();
 
   return (
@@ -1014,6 +1024,35 @@ export default function App() {
                  </a>
                </div>
             </div>
+
+            {user && (
+              <ControlGroup label="WORKSPACE" themeMode={themeMode}>
+                <select
+                  value={selectedWorkspaceId ?? ''}
+                  onChange={(e) => setSelectedWorkspaceId(e.target.value || null)}
+                  className={workspaceSelectClass}
+                  disabled={workspacesLoading || workspaces.length === 0}
+                >
+                  {workspaces.length === 0 ? (
+                    <option value="">{workspacesLoading ? 'Loading...' : 'No workspaces'}</option>
+                  ) : (
+                    <>
+                      <option value="">{isTerminal ? '-- DEFAULT --' : 'Default workspace'}</option>
+                      {workspaces.map((ws) => (
+                        <option key={ws.id} value={ws.id}>
+                          {ws.name}
+                        </option>
+                      ))}
+                    </>
+                  )}
+                </select>
+                <div className={`mt-2 text-xs ${isTerminal ? 'text-terminal-dim font-terminal' : isVSCode ? 'text-[#858585] font-mono' : 'text-[#999999] font-sans'}`}>
+                  {workspaces.length === 0
+                    ? (isTerminal ? '[ SEND TARGET: ACCOUNT DEFAULT ]' : 'Messages go to your default workspace')
+                    : (isTerminal ? `[ SEND TARGET: ${(workspaces.find((w) => w.id === selectedWorkspaceId)?.name ?? 'DEFAULT').toUpperCase()} ]` : `Send target: ${workspaces.find((w) => w.id === selectedWorkspaceId)?.name ?? 'Default workspace'}`)}
+                </div>
+              </ControlGroup>
+            )}
           </div>
         </div>
       </div>

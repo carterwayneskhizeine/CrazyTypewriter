@@ -59,3 +59,14 @@ export interface DocumentVersion {
   content: string;
   lastModified: Date;
 }
+
+// WhiteNote workspace (send target for messages)
+export interface Workspace {
+  id: string;
+  name: string;
+  description?: string | null;
+  isDefault?: boolean;
+  userId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
