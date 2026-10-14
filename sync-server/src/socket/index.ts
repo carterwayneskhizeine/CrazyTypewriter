@@ -1,5 +1,6 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
 import { updateDocument, getDocument } from '../services/syncService';
+import { resolveSession } from '../middleware/authMiddleware';
 
 interface SocketData {
   user?: {
@@ -10,18 +11,21 @@ interface SocketData {
 
 export function setupSocketHandlers(io: SocketIOServer) {
   // Authentication middleware for Socket.io
+  // CORS_ORIGIN may be a comma-separated allowlist (e.g. LAN IP + public domain).
+  // When unset, the origin check is skipped entirely.
+  const allowedOrigins = (process.env.CORS_ORIGIN || '')
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean);
+
   io.use(async (socket: Socket, next) => {
-    const auth = socket.handshake.auth as { userId?: number; username?: string };
-
-    if (!auth.userId || !auth.username) {
-      return next(new Error('Authentication error: No user credentials provided'));
+    const origin = socket.handshake.headers.origin;
+    if (origin && allowedOrigins.length && !allowedOrigins.includes(origin)) {
+      return next(new Error('Authentication error: Origin not allowed'));
     }
-
-    // Use user info from auth (passed from frontend)
-    socket.data.user = {
-      id: auth.userId,
-      username: auth.username
-    };
+    const user = await resolveSession(socket.handshake.headers.cookie);
+    if (!user) return next(new Error('Authentication required'));
+    socket.data.user = user;
     next();
   });
 

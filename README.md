@@ -16,7 +16,13 @@
 2. Build and start all containers:
    `docker compose up -d --build`
 3. Access app:
-   http://localhost:5111
+   http://localhost:15111
+
+Set `APP_ORIGIN` to the editor's public URL (including its port). Set
+`VITE_POST_HOST` to a WhiteNote URL reachable from both Docker containers.
+Register an account in WhiteNote, then use the same email and password here.
+The sync service verifies the WhiteNote session cookie and maps its string user
+ID to a persistent numeric sync ID; client-provided user IDs are not trusted.
 
 ### Docker Commands Reference
 

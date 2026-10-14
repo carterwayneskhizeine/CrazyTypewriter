@@ -18,7 +18,8 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3001
-      - CORS_ORIGIN=*
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:15111}
+      - AUTH_BASE_URL=${VITE_POST_HOST}
     volumes:
       - ./sync-server/data:/app/data
     restart: always

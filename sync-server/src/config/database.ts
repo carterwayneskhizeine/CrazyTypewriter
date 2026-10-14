@@ -34,6 +34,12 @@ export async function initializeDatabase(): Promise<Database> {
     // Create table if not exists
     const currentDb = db!; // Non-null assertion
     currentDb.run(`
+      CREATE TABLE IF NOT EXISTS auth_users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        external_id TEXT NOT NULL UNIQUE
+      )
+    `);
+    currentDb.run(`
       CREATE TABLE IF NOT EXISTS user_documents (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id INTEGER NOT NULL UNIQUE,

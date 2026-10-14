@@ -416,11 +416,14 @@ export default function App() {
 
   const handleLogout = async () => {
     try {
+      const csrfResponse = await fetch('/api/auth/csrf', { credentials: 'include' });
+      const { csrfToken } = await csrfResponse.json();
       await fetch('/api/auth/signout', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         credentials: 'include',
-        body: JSON.stringify({ callbackUrl: window.location.origin }),
+        body: new URLSearchParams({ csrfToken, callbackUrl: window.location.origin }),
+        redirect: 'manual',
       });
     } catch (err) {
       console.error('Logout error:', err);

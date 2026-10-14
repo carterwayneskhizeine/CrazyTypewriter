@@ -10,9 +10,13 @@ const app = express();
 const httpServer = createServer(app);
 
 // Socket.io setup
+const allowedOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
 const io = new SocketIOServer(httpServer, {
   cors: {
-    origin: process.env.CORS_ORIGIN || '*',
+    origin: allowedOrigins.length ? allowedOrigins : '*',
     methods: ['GET', 'POST'],
     credentials: true
   },
@@ -21,7 +25,7 @@ const io = new SocketIOServer(httpServer, {
 
 // Middleware
 app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
+  origin: allowedOrigins.length ? allowedOrigins : '*',
   credentials: true
 }));
 app.use(express.json());
