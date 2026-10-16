@@ -15,7 +15,7 @@ export function useSync({
   text,
   onContentReceived,
   onConflict,
-  debounceMs = 5000
+  debounceMs = 1500
 }: UseSyncOptions) {
   const [syncStatus, setSyncStatus] = useState<SyncStatus>({
     connected: false,
@@ -61,6 +61,20 @@ export function useSync({
     syncContent(text);
   }, [text, syncContent]);
 
+  // Manual refresh: reconnect a dead socket (the server pushes the latest
+  // content on every connection) or, when already connected, pull the latest
+  // content from the server
+  const refreshSync = useCallback(() => {
+    const socket = socketRef.current;
+    if (!socket) return;
+    setSyncStatus(prev => ({ ...prev, syncing: true }));
+    if (socket.connected) {
+      socket.emit('sync:request');
+    } else {
+      socket.connect();
+    }
+  }, []);
+
   // Initialize WebSocket connection
   useEffect(() => {
     if (!user) {
@@ -79,7 +93,7 @@ export function useSync({
       path: '/socket.io/',
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 5,
+      reconnectionAttempts: Infinity,
       reconnectionDelay: 1000,
       withCredentials: true,
       auth: {
@@ -100,6 +114,7 @@ export function useSync({
 
     socket.on('connect_error', (error) => {
       console.error('[Sync] Connection error:', error);
+      setSyncStatus(prev => ({ ...prev, syncing: false }));
     });
 
     socket.on('content:loaded', ({ content, version }: { content: string; version: number }) => {
@@ -111,6 +126,7 @@ export function useSync({
       setTimeout(() => { isUpdatingRef.current = false; }, 100);
       setSyncStatus(prev => ({
         ...prev,
+        syncing: false,
         lastSyncedAt: new Date(),
         pendingChanges: false
       }));
@@ -131,6 +147,7 @@ export function useSync({
       setTimeout(() => { isUpdatingRef.current = false; }, 100);
       setSyncStatus(prev => ({
         ...prev,
+        syncing: false,
         lastSyncedAt: new Date(),
         pendingChanges: false
       }));
@@ -162,7 +179,20 @@ export function useSync({
 
     socketRef.current = socket;
 
+    // Revive a dead connection when the page becomes visible again (e.g. phone
+    // screen unlocked) or the network comes back. The server pushes the latest
+    // content on every connection, so a reconnect is also a content refresh.
+    const reviveConnection = () => {
+      if (document.visibilityState === 'visible' && socketRef.current && !socketRef.current.connected) {
+        socketRef.current.connect();
+      }
+    };
+    document.addEventListener('visibilitychange', reviveConnection);
+    window.addEventListener('online', reviveConnection);
+
     return () => {
+      document.removeEventListener('visibilitychange', reviveConnection);
+      window.removeEventListener('online', reviveConnection);
       socket.disconnect();
     };
   }, [user, onContentReceived, onConflict, getDeviceId]);
@@ -198,6 +228,7 @@ export function useSync({
 
   return {
     syncStatus,
-    manualSync
+    manualSync,
+    refreshSync
   };
 }

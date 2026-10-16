@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun, Lock, Cloud, Undo } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -20,14 +20,15 @@ const DEFAULT_CONFIG: PowerConfig = {
   shakeIntensity: 5,
   spawnHeightOffset: 5,
   fontSize: 16,
+  effectsEnabled: true,
 };
 
-// Colors for different levels - Terminal Blue-Purple Gradient Theme (Gemini CLI style)
+// Colors for different levels - Terminal Electronic Blue CRT Theme
 const TERMINAL_LEVEL_COLORS = {
-  [PowerLevel.None]: ['#e0e0e0', '#f0f0f0'], // Dim White
-  [PowerLevel.Power]: ['#f5f5f5', '#fafafa', '#ffffff', '#ffffff'], // White gradient
-  [PowerLevel.SuperPower]: ['#ffffff', '#ffffff', '#ffffff', '#ffffff'], // Bright White
-  [PowerLevel.ManyPower]: ['#ffffff', '#ffffff', '#ffffff', '#ffffff'], // Intense White
+  [PowerLevel.None]: ['#00719a', '#00bfff'], // Dim blue
+  [PowerLevel.Power]: ['#00bfff', '#4fc8ff', '#7fdbff', '#bae8ff'], // Blue gradient
+  [PowerLevel.SuperPower]: ['#7fdbff', '#9fe4ff', '#bae8ff', '#d6f4ff'], // Bright blue
+  [PowerLevel.ManyPower]: ['#00bfff', '#7fdbff', '#bae8ff', '#d6f4ff', '#ffffff'], // Intense blue/white
 };
 
 // Colors for different levels - VS Code Blue Theme
@@ -83,7 +84,14 @@ export default function App() {
   const [text, setText] = useState<string>('');
   const [combo, setCombo] = useState(0);
   const [maxCombo, setMaxCombo] = useState(0);
-  const [config, setConfig] = useState<PowerConfig>(DEFAULT_CONFIG);
+  const [config, setConfig] = useState<PowerConfig>(() => {
+    // Persisted config (font size, effects toggle, ...), merged over defaults
+    try {
+      const stored = localStorage.getItem('powerConfig');
+      if (stored) return { ...DEFAULT_CONFIG, ...JSON.parse(stored) };
+    } catch { /* corrupted storage - fall back to defaults */ }
+    return DEFAULT_CONFIG;
+  });
   const [showConfig, setShowConfig] = useState(false);
   const [shakeClass, setShakeClass] = useState('');
   const [caretY, setCaretY] = useState(0);
@@ -108,11 +116,11 @@ export default function App() {
   }, []);
 
   // Multi-device sync
-  const { syncStatus, manualSync } = useSync({
+  const { syncStatus, manualSync, refreshSync } = useSync({
     user,
     text,
     onContentReceived: handleContentReceived,
-    debounceMs: parseInt(import.meta.env.VITE_SYNC_DEBOUNCE_MS || '5000', 10)
+    debounceMs: parseInt(import.meta.env.VITE_SYNC_DEBOUNCE_MS || '1500', 10)
   });
 
   // WhiteNote workspace selector (send target)
@@ -140,6 +148,20 @@ export default function App() {
   const lastTimeRef = useRef<number>(0);
   const comboTimeoutRef = useRef<number | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Persist config (font size, effects toggle, sliders) across reloads
+  useEffect(() => {
+    try { localStorage.setItem('powerConfig', JSON.stringify(config)); } catch { /* storage full/unavailable */ }
+  }, [config]);
+
+  // Line-number gutter: logical lines + measured wrapped heights of each line
+  const gutterInnerRef = useRef<HTMLDivElement>(null);
+  const lines = useMemo(() => text.split('\n'), [text]);
+  const [lineHeights, setLineHeights] = useState<number[]>([]);
+  const [boxWidth, setBoxWidth] = useState(0);
+  const digits = Math.max(2, String(lines.length).length);
+  // 10px = left inset for the left-aligned numbers; rest = digit width
+  const gutterWidthPx = Math.ceil(digits * 0.62 * config.fontSize + 10);
 
   // Derived State
   const getPowerLevel = useCallback((currentCombo: number): PowerLevel => {
@@ -241,6 +263,56 @@ export default function App() {
     return () => cancelAnimationFrame(lastTimeRef.current);
   }, [updateAndDraw]);
 
+  // Measure the wrapped height of every logical line with a hidden mirror div
+  // that shares the textarea's exact styles, so gutter numbers stay aligned
+  // even when long lines soft-wrap (incl. CJK text).
+  useEffect(() => {
+    if (viewMode !== 'edit') return;
+    const ta = inputRef.current;
+    if (!ta || text === '') { setLineHeights([]); return; }
+
+    const cs = window.getComputedStyle(ta);
+    const contentWidth = ta.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    if (contentWidth <= 0) return;
+
+    const mirror = document.createElement('div');
+    const props = ['boxSizing', 'fontFamily', 'fontSize', 'fontWeight', 'fontStyle', 'letterSpacing', 'lineHeight', 'tabSize', 'whiteSpace', 'overflowWrap', 'wordBreak'];
+    props.forEach((p) => {
+      // @ts-ignore - computed-style keys map directly to style properties
+      mirror.style[p] = cs[p];
+    });
+    mirror.style.position = 'absolute';
+    mirror.style.visibility = 'hidden';
+    mirror.style.top = '0';
+    mirror.style.left = '-9999px';
+    mirror.style.width = `${contentWidth}px`;
+
+    const blocks = lines.map((line) => {
+      const b = document.createElement('div');
+      b.textContent = line === '' ? '\u200b' : line; // zero-width space keeps empty lines one row tall
+      mirror.appendChild(b);
+      return b;
+    });
+
+    document.body.appendChild(mirror);
+    const heights = blocks.map((b) => b.getBoundingClientRect().height);
+    document.body.removeChild(mirror);
+
+    setLineHeights(heights);
+    if (gutterInnerRef.current) {
+      gutterInnerRef.current.style.transform = `translateY(${-ta.scrollTop}px)`;
+    }
+  }, [lines, text, config.fontSize, viewMode, boxWidth, gutterWidthPx]);
+
+  // Re-measure when the textarea width changes (sidebar toggle, rotation, window resize)
+  useEffect(() => {
+    const ta = inputRef.current;
+    if (!ta || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => setBoxWidth(ta.clientWidth));
+    ro.observe(ta);
+    return () => ro.disconnect();
+  }, []);
+
   // --- Input Handling ---
 
   const triggerShake = (level: PowerLevel) => {
@@ -259,6 +331,9 @@ export default function App() {
   const handleInput = (e: React.FormEvent<HTMLTextAreaElement>) => {
     const target = e.currentTarget;
     setText(target.value);
+
+    // Plain mode: skip combo counting, particles, shake and caret tracking
+    if (!config.effectsEnabled) return;
 
     // Update Combo
     setCombo(prev => {
@@ -530,10 +605,10 @@ export default function App() {
   const getLevelColorClass = () => {
     if (isTerminal) {
       switch (currentLevel) {
-        case PowerLevel.ManyPower: return 'crt-glow text-white';
-        case PowerLevel.SuperPower: return 'crt-glow text-white';
-        case PowerLevel.Power: return 'crt-glow-subtle text-white';
-        default: return 'text-white';
+        case PowerLevel.ManyPower: return 'crt-glow text-[#d6f4ff]';
+        case PowerLevel.SuperPower: return 'crt-glow text-[#d6f4ff]';
+        case PowerLevel.Power: return 'crt-glow-subtle text-[#7fdbff]';
+        default: return 'text-terminal';
       }
     } else if (isVSCode) {
       switch (currentLevel) {
@@ -555,32 +630,32 @@ export default function App() {
 
   // Theme-based color helpers
   const getPrimaryColor = () => {
-    if (themeMode === 'terminal') return '#60a5fa'; // Blue primary
+    if (themeMode === 'terminal') return '#00bfff'; // Electronic blue primary
     if (themeMode === 'vscode') return '#d4d4d4';
     return '#1a1a1a'; // Modern - dark gray-black
   };
   const getSecondaryColor = () => {
-    if (themeMode === 'terminal') return '#2563eb'; // Dark blue
+    if (themeMode === 'terminal') return '#0087b3'; // Deep blue secondary
     if (themeMode === 'vscode') return '#858585';
     return '#666666'; // Modern - medium gray
   };
   const getAccentColor = () => {
-    if (themeMode === 'terminal') return '#8b5cf6'; // Purple accent (right side)
+    if (themeMode === 'terminal') return '#7fdbff'; // Light blue accent (right side)
     if (themeMode === 'vscode') return '#007acc';
     return '#ffd700'; // Modern - gold/yellow
   };
   const getBgColor = () => {
-    if (themeMode === 'terminal') return '#0a0f1c'; // Dark blue-black background
+    if (themeMode === 'terminal') return '#001122'; // Deep blue-black background
     if (themeMode === 'vscode') return '#1e1e1e';
     return '#fffde7'; // Modern - pale yellow
   };
   const getBorderColor = () => {
-    if (themeMode === 'terminal') return '#3b82f6'; // Blue border (left side)
+    if (themeMode === 'terminal') return '#00bfff'; // Blue border (left side)
     if (themeMode === 'vscode') return '#3c3c3c';
     return '#e0e0e0'; // Modern - light gray border
   };
   const getHeaderBgColor = () => {
-    if (themeMode === 'terminal') return '#0a0f1c'; // Dark blue-black header
+    if (themeMode === 'terminal') return '#001122'; // Deep blue-black header
     if (themeMode === 'vscode') return '#252526';
     return '#fafafa'; // Modern - off-white header
   };
@@ -591,9 +666,11 @@ export default function App() {
   const isModern = themeMode === 'modern';
 
   const bodyContainerClass = (() => {
-    if (isTerminal) return 'min-h-screen bg-terminal overflow-hidden flex flex-col crt-scanlines';
-    if (isVSCode) return 'min-h-screen bg-[#1e1e1e] overflow-hidden flex flex-col';
-    return 'min-h-screen bg-[#fffde7] overflow-hidden flex flex-col modern-pattern';
+    // h-[100dvh]: definite height so the editor's h-full resolves on mobile,
+    // and dvh adapts when the soft keyboard opens
+    if (isTerminal) return 'h-[100dvh] bg-terminal overflow-hidden flex flex-col crt-scanlines';
+    if (isVSCode) return 'h-[100dvh] bg-[#1e1e1e] overflow-hidden flex flex-col';
+    return 'h-[100dvh] bg-[#fffde7] overflow-hidden flex flex-col modern-pattern';
   })();
 
   const curvatureFlickerClass = isTerminal ? 'crt-curvature crt-flicker' : '';
@@ -616,7 +693,7 @@ export default function App() {
   })();
 
   const textareaClass = (() => {
-    if (isTerminal) return 'block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8 font-terminal text-terminal focus:outline-none resize-none leading-relaxed selection:bg-terminal selection:text-white';
+    if (isTerminal) return 'block-cursor terminal-scrollbar w-full h-full bg-transparent border-0 p-8 font-terminal text-terminal focus:outline-none resize-none leading-relaxed selection:bg-terminal selection:text-[#d6f4ff]';
     if (isVSCode) return 'vscode-cursor vscode-scrollbar w-full h-full bg-transparent border-0 p-8 font-mono text-[#d4d4d4] focus:outline-none resize-none leading-relaxed selection:bg-[#007acc] selection:text-white rounded-md';
     return 'modern-cursor modern-scrollbar w-full h-full bg-transparent border-0 p-8 font-sans text-[#1a1a1a] focus:outline-none resize-none leading-relaxed selection:bg-[#ffd700] selection:text-black rounded-lg';
   })();
@@ -628,7 +705,8 @@ export default function App() {
   })();
 
   const editorWrapperClass = (() => {
-    const baseClass = 'w-full h-[85vh] sm:max-w-[calc(100vw-160px)] sm:h-[calc(100vh-120px)] relative z-20';
+    // h-full on mobile: fill remaining viewport so bottom spacing matches the top
+    const baseClass = 'w-full h-full sm:max-w-[calc(100vw-160px)] sm:h-[calc(100vh-120px)] relative z-20';
     return baseClass;
   })();
 
@@ -665,12 +743,12 @@ export default function App() {
       <header className={headerClass}>
         <div className="flex items-center gap-2 hidden sm:flex">
           <div className={`p-1 border-2 ${(() => {
-            if (isTerminal) return currentLevel >= PowerLevel.ManyPower ? 'border-white animate-pulse' : 'border-terminal';
+            if (isTerminal) return currentLevel >= PowerLevel.ManyPower ? 'border-[#d6f4ff] animate-pulse' : 'border-terminal';
             if (isVSCode) return 'border-[#3c3c3c] rounded';
             return 'border-[#ffd700] rounded-lg';
           })()}`}>
              {currentLevel >= PowerLevel.ManyPower
-              ? <Flame className={`w-4 h-4 ${isTerminal ? 'text-white crt-glow' : isVSCode ? 'text-white' : 'text-[#ffd700]'}`} />
+              ? <Flame className={`w-4 h-4 ${isTerminal ? 'text-[#d6f4ff] crt-glow' : isVSCode ? 'text-white' : 'text-[#ffd700]'}`} />
               : <Zap className={`w-4 h-4 ${isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700]'}`} />
              }
           </div>
@@ -687,17 +765,29 @@ export default function App() {
 
         {/* Buttons - Show on both mobile and desktop */}
         <div className="flex items-center gap-2">
+          {config.effectsEnabled && (
           <div className={`text-right hidden sm:block ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'}`}>
             <div className={`text-xs uppercase tracking-wider ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`}>MAX STREAK</div>
             <div className={`text-base ${isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700] font-bold'}`}>{maxCombo}</div>
           </div>
+          )}
           {/* Sync Status Indicator - Only show when logged in */}
           {user && syncStatus && (
             <div className="flex items-center gap-1.5" title={`Last synced: ${syncStatus.lastSyncedAt ? new Date(syncStatus.lastSyncedAt).toLocaleTimeString() : 'Never'}`}>
-              <div className={`w-2 h-2 rounded-full ${syncStatus.connected ? (isTerminal ? 'bg-gradient-to-r from-[#3b82f6] to-[#8b5cf6]' : 'bg-green-500') : 'bg-red-500'} ${syncStatus.syncing ? 'animate-pulse' : ''}`} />
+              <div className={`w-2 h-2 rounded-full ${syncStatus.connected ? (isTerminal ? 'bg-gradient-to-r from-[#00bfff] to-[#7fdbff]' : 'bg-green-500') : 'bg-red-500'} ${syncStatus.syncing ? 'animate-pulse' : ''}`} />
               {syncStatus.pendingChanges && <div className="w-2 h-2 rounded-full bg-yellow-500 animate-ping" />}
               <Cloud className={`w-3.5 h-3.5 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#858585]' : 'text-[#999999]'} ${syncStatus.syncing ? 'animate-pulse' : ''}`} />
             </div>
+          )}
+          {/* Manual Sync Refresh - reconnect dead socket & pull latest, only when logged in */}
+          {user && (
+            <button
+              onClick={refreshSync}
+              className={themeBtnClass}
+              title={syncStatus.connected ? 'Refresh: pull latest from server' : 'Refresh: reconnect sync'}
+            >
+              <RefreshCcw className={`w-4 h-4 ${syncStatus.syncing ? 'animate-spin' : ''} ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+            </button>
           )}
           {/* Login/Logout Button */}
           {user ? (
@@ -765,7 +855,7 @@ export default function App() {
             className={themeBtnClass}
             title={copied ? 'Copied!' : 'Copy'}
           >
-            {copied ? <Check className={`w-4 h-4 ${isTerminal ? 'text-white' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700]'}`} /> : <Copy className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />}
+            {copied ? <Check className={`w-4 h-4 ${isTerminal ? 'text-[#7fdbff]' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700]'}`} /> : <Copy className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />}
           </button>
           <button
             onClick={() => setViewMode(viewMode === 'edit' ? 'preview' : 'edit')}
@@ -812,7 +902,7 @@ export default function App() {
               absolute z-40 pointer-events-none flex flex-col justify-center
               transition-all duration-300 ease-out
               ${hudSide === 'right' ? 'right-8 items-end' : 'left-8 items-start'}
-              ${combo > 0 ? 'opacity-100' : 'opacity-0'}
+              ${combo > 0 && config.effectsEnabled ? 'opacity-100' : 'opacity-0'}
             `}
             style={{
               top: caretY,
@@ -857,14 +947,39 @@ export default function App() {
               </>
             )}
 
+            {/* Line-number gutter: numbers only on lines that contain text */}
+            {viewMode === 'edit' && (
+              <div
+                className={`absolute top-0 bottom-0 left-0 z-10 overflow-hidden pointer-events-none select-none ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'}`}
+                style={{ width: `${gutterWidthPx}px` }}
+              >
+                <div ref={gutterInnerRef} style={{ paddingTop: 32, fontSize: `${config.fontSize}px` }}>
+                  {lines.map((line, i) => (
+                    <div key={i} className="leading-relaxed text-left pl-2.5" style={{ height: lineHeights[i] ?? config.fontSize * 1.625 }}>
+                      {line.trim() !== '' && (
+                        <span className={isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#aaaaaa]'}>
+                          {i + 1}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <textarea
               ref={inputRef}
               value={text}
               onChange={handleInput}
+              onScroll={(e) => {
+                if (gutterInnerRef.current) {
+                  gutterInnerRef.current.style.transform = `translateY(${-e.currentTarget.scrollTop}px)`;
+                }
+              }}
               spellCheck={false}
               className={textareaClass}
               placeholder={isTerminal ? "// START TYPING TO CHARGE YOUR POWER..." : isVSCode ? "// Start typing to charge your power..." : "// Start typing to unleash your power..."}
-              style={{ display: viewMode === 'edit' ? 'block' : 'none', fontSize: `${config.fontSize}px` }}
+              style={{ display: viewMode === 'edit' ? 'block' : 'none', fontSize: `${config.fontSize}px`, paddingLeft: `${14 + gutterWidthPx}px`, paddingRight: `${14 + gutterWidthPx}px` }}
             />
             <div
               className={previewClass}
@@ -921,6 +1036,28 @@ export default function App() {
           </div>
 
           <div className="space-y-4">
+            <ControlGroup label="ALL EFFECTS" themeMode={themeMode}>
+              <button
+                onClick={() => setConfig({ ...config, effectsEnabled: !config.effectsEnabled })}
+                className={`w-full py-2 px-4 border transition-all duration-200 ${
+                  config.effectsEnabled
+                    ? (isTerminal ? 'border-terminal text-terminal font-terminal hover:bg-terminal hover:text-black'
+                       : isVSCode ? 'border-[#007acc] text-[#007acc] font-mono hover:bg-[#007acc] hover:text-white'
+                       : 'border-[#ffd700] text-[#ffd700] font-sans hover:bg-[#ffd700] hover:text-black')
+                    : (isTerminal ? 'border-terminal-dim text-terminal-dim font-terminal hover:bg-terminal-dim hover:text-black'
+                       : isVSCode ? 'border-[#3c3c3c] text-[#858585] font-mono hover:border-[#007acc]'
+                       : 'border-[#e0e0e0] text-[#999999] font-sans hover:border-[#ffd700]')
+                }`}
+              >
+                {config.effectsEnabled
+                  ? (isTerminal ? '[ POWER MODE: ON ]' : 'Power Mode: On')
+                  : (isTerminal ? '[ PLAIN MODE ]' : 'Plain Mode (no effects)')}
+              </button>
+              <div className={`mt-1 text-xs ${isTerminal ? 'text-terminal-dim font-terminal' : isVSCode ? 'text-[#858585] font-mono' : 'text-[#999999] font-sans'}`}>
+                {isTerminal ? '[ SHAKE / COMBO / PARTICLES ]' : 'Shake · Combo · Particles'}
+              </div>
+            </ControlGroup>
+
             <ControlGroup label="FONT SIZE" themeMode={themeMode}>
               <input
                 type="range" min="8" max="32" step="1"
@@ -1006,7 +1143,7 @@ export default function App() {
                  </div>
                  <div className="flex justify-between">
                    <span>MANY POWER</span>
-                    <span className={isTerminal ? 'text-white crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700] font-bold'}>[{COMBO_THRESHOLDS.MANY}]</span>
+                    <span className={isTerminal ? 'text-[#d6f4ff] crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700] font-bold'}>[{COMBO_THRESHOLDS.MANY}]</span>
                  </div>
                  <a
                    href="https://github.com/carterwayneskhizeine/CrazyTypewriter"
