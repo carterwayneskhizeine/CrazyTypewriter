@@ -12,6 +12,8 @@ Gamified text editor with particle effects, screen shake, and combo tracking. Bu
 - 3 Themes: Retro Terminal, VS Code Modern, Modern Wild White
 - Markdown Preview, Copy to Clipboard, Send to Server
 - **User Authentication**: Login/logout with cookie-based session management
+- **Line-Number Gutter**: left gutter in edit mode; numbers only on non-empty lines, wrap-aware (hidden mirror div measures per-logical-line height), scroll-synced with the textarea
+- **Effects Toggle**: settings panel "Power Mode / Plain Mode" switch (`config.effectsEnabled`, persisted in localStorage `powerConfig`) disables shake/combo/particles/HUD for a plain editing experience
 - Responsive Design
 
 ## Tech Stack
@@ -63,7 +65,7 @@ Uses **Mirror Div Strategy** to get exact cursor position:
 
 ## Theme System
 Three themes in cyclic rotation: Terminal → VS Code → Modern → Terminal
-- **Terminal:** Green monochrome, CRT effects, block cursor
+- **Terminal:** Electronic blue (#00BFFF) monochrome, CRT effects, block cursor
 - **VS Code:** Dark theme, clean flat design, thin cursor
 - **Modern:** White background, neon pink/cyan/yellow accents, random particle colors
 
@@ -82,7 +84,7 @@ Three themes in cyclic rotation: Terminal → VS Code → Modern → Terminal
 | Super Power | 30-59 | Moderate shake |
 | Many Power | 60+ | Intense shake + "use with caution" warning |
 
-Colors differ per theme (green/blue/neon), Modern theme has expanded neon palette at higher levels.
+Colors differ per theme (electronic blue/blue/neon), Modern theme has expanded neon palette at higher levels.
 
 ## Key Files
 - `App.tsx` - Main component, state management, particle physics, authentication logic
@@ -134,7 +136,7 @@ Colors differ per theme (green/blue/neon), Modern theme has expanded neon palett
 
 ### How It Works
 When 2+ devices login with the same account:
-1. **Auto-sync**: Content syncs automatically after typing stops (configurable debounce, default 5s)
+1. **Auto-sync**: Content syncs automatically after typing stops (configurable debounce, default 1.5s)
 2. **Real-time updates**: WebSocket pushes changes instantly to other devices
 3. **Persistence**: Content saved to SQLite database, survives browser closure
 4. **Conflict resolution**: Optimistic locking with version numbers (Last-Write-Wins)
@@ -156,7 +158,7 @@ When 2+ devices login with the same account:
 
 ### Configuration
 Environment variables (`.env`):
-- `VITE_SYNC_DEBOUNCE_MS` - Debounce delay in ms (default: 5000)
+- `VITE_SYNC_DEBOUNCE_MS` - Debounce delay in ms (default: 1500)
   - Controls how long after typing stops before auto-sync
   - Lower values = faster sync but more server requests
   - Higher values = less frequent sync but better performance
@@ -179,6 +181,7 @@ Visual feedback in header (visible when logged in):
 - **Red dot** - Disconnected from server
 - **Yellow dot (pulsing)** - Pending changes waiting to sync
 - **Cloud icon (pulsing)** - Currently syncing
+- **Refresh Button** (RefreshCcw icon, logged in) - Force-reconnect a dead socket and pull latest content (`refreshSync` in `useSync`); connection also auto-revives on tab visibility change / network recovery (`visibilitychange` + `online` listeners; `reconnectionAttempts: Infinity`)
 
 ### Important Implementation Notes
 **Critical: Stable Function References**
@@ -201,3 +204,24 @@ Visual feedback in header (visible when logged in):
 - Debouncing reduces server load significantly
 - WebSocket connection persists for duration of session
 - Updates only triggered on text changes, not every keystroke
+
+## Android APK（安卓打包）
+
+APK 是线上站点的全屏 WebView 壳（Capacitor remote-URL mode），启动即加载 `https://type-node.goldie-rill.top`。网页版 / Docker / nginx 零改动——所有 API 都是同源相对路径，NextAuth Cookie 与 socket.io 在 WebView 里照常工作。
+
+**新增文件：**
+- `capacitor.config.ts` — appId `top.goldierill.crazytypewriter`、`server.url` 指向线上站点、SystemBars 深色
+- `mobile-www/` — Capacitor 必需的 webDir 占位页（实际不显示）
+- `android/` — 生成的安卓工程（manifest 已加 `adjustResize` 软键盘适配）
+- `scripts/generate-android-icons.py` — 用 Pillow 重画全部 mipmap/启动图（站点蓝 #25AEF3 + 白色键盘图形）
+
+**构建（一次性环境：JDK 21 + Android SDK `/root/Android/Sdk`）：**
+```bash
+python3 scripts/generate-android-icons.py   # 仅图标改动时需要
+cd android && ./gradlew assembleRelease
+# 产物: android/app/build/outputs/apk/release/app-release.apk
+```
+
+**升级发新版的两个硬性要求：**
+1. 用**同一个 keystore** 签名：`android/crazytypewriter.keystore` + `android/keystore.properties`（均已 gitignore，**务必离线备份**；丢失则手机必须卸载重装才能装新版）
+2. `android/app/build.gradle` 里 `versionCode` 递增（1 → 2 → …）
