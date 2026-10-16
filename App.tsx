@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun, Lock, Cloud, Undo } from 'lucide-react';
+import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun, Lock, Cloud, Undo, FolderKanban, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -93,6 +93,8 @@ export default function App() {
     return DEFAULT_CONFIG;
   });
   const [showConfig, setShowConfig] = useState(false);
+  const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false);
+  const workspaceMenuRef = useRef<HTMLDivElement>(null);
   const [shakeClass, setShakeClass] = useState('');
   const [caretY, setCaretY] = useState(0);
   const [hudSide, setHudSide] = useState<'left' | 'right'>('right');
@@ -125,6 +127,29 @@ export default function App() {
 
   // WhiteNote workspace selector (send target)
   const { workspaces, loading: workspacesLoading, selectedWorkspaceId, setSelectedWorkspaceId } = useWorkspaces({ user });
+
+  // Workspace dropdown: close on outside click / Escape / logout
+  useEffect(() => {
+    if (!showWorkspaceMenu) return;
+    const onMouseDown = (e: MouseEvent) => {
+      if (workspaceMenuRef.current && !workspaceMenuRef.current.contains(e.target as Node)) {
+        setShowWorkspaceMenu(false);
+      }
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowWorkspaceMenu(false);
+    };
+    document.addEventListener('mousedown', onMouseDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onMouseDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [showWorkspaceMenu]);
+
+  useEffect(() => {
+    if (!user) setShowWorkspaceMenu(false);
+  }, [user]);
 
   // Check for existing session on mount
   useEffect(() => {
@@ -724,11 +749,24 @@ export default function App() {
     return 'w-full modern-range';
   })();
 
-  const workspaceSelectClass = (() => {
-    if (isTerminal) return 'w-full px-2 py-2 bg-black/40 border border-terminal-dim text-terminal font-terminal text-sm rounded-none focus:outline-none focus:border-terminal cursor-pointer';
-    if (isVSCode) return 'w-full px-2 py-2 bg-[#3c3c3c] border border-[#3c3c3c] text-[#d4d4d4] font-mono text-sm rounded focus:outline-none focus:border-[#007acc] cursor-pointer';
-    return 'w-full px-2 py-2 bg-white border border-[#e0e0e0] text-[#1a1a1a] font-sans text-sm rounded focus:outline-none focus:border-[#ffd700] cursor-pointer';
+  // Themed workspace dropdown (custom popup — native <select> options can't be themed)
+  const workspaceMenuPanelClass = (() => {
+    if (isTerminal) return 'absolute right-0 top-full mt-2 w-60 max-h-72 overflow-y-auto terminal-scrollbar bg-terminal-black border-2 border-terminal shadow-lg z-50';
+    if (isVSCode) return 'absolute right-0 top-full mt-2 w-60 max-h-72 overflow-y-auto vscode-scrollbar bg-[#252526] border border-[#3c3c3c] rounded-md shadow-2xl z-50';
+    return 'absolute right-0 top-full mt-2 w-60 max-h-72 overflow-y-auto modern-scrollbar bg-white border border-[#ffd700] rounded-lg shadow-xl z-50';
   })();
+
+  const workspaceMenuHeaderClass = (() => {
+    if (isTerminal) return 'px-3 py-2 text-xs font-terminal text-terminal-dim tracking-wider border-b border-terminal-dim';
+    if (isVSCode) return 'px-3 py-2 text-xs font-mono text-[#858585] tracking-wider border-b border-[#3c3c3c]';
+    return 'px-3 py-2 text-xs font-sans text-[#999999] tracking-wider border-b border-[#e0e0e0]';
+  })();
+
+  const getWorkspaceItemClass = (selected: boolean) => {
+    if (isTerminal) return `w-full flex items-center justify-between gap-2 px-3 py-2 text-sm font-terminal text-left cursor-pointer truncate ${selected ? 'bg-terminal text-black' : 'text-terminal hover:bg-terminal hover:text-black'}`;
+    if (isVSCode) return `w-full flex items-center justify-between gap-2 px-3 py-2 text-sm font-mono text-left cursor-pointer truncate ${selected ? 'bg-[#094771] text-white' : 'text-[#cccccc] hover:bg-[#2a2d2e] hover:text-white'}`;
+    return `w-full flex items-center justify-between gap-2 px-3 py-2 text-sm font-sans text-left cursor-pointer truncate ${selected ? 'bg-[#fff3c4] text-[#1a1a1a] font-medium' : 'text-[#1a1a1a] hover:bg-[#fffde7]'}`;
+  };
 
   return (
     <div className={bodyContainerClass}>
@@ -740,7 +778,7 @@ export default function App() {
       />
 
       {/* Header - Show buttons on mobile, full header on desktop */}
-      <header className={headerClass}>
+      <header className={`${headerClass} ${showWorkspaceMenu ? '!z-40' : ''}`}>
         <div className="flex items-center gap-2 hidden sm:flex">
           <div className={`p-1 border-2 ${(() => {
             if (isTerminal) return currentLevel >= PowerLevel.ManyPower ? 'border-[#d6f4ff] animate-pulse' : 'border-terminal';
@@ -763,8 +801,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Buttons - Show on both mobile and desktop */}
-        <div className="flex items-center gap-2">
+        {/* Buttons - Show on both mobile and desktop (wrap on narrow screens so nothing falls off-screen) */}
+        <div className="flex flex-wrap items-center justify-end gap-2">
           {config.effectsEnabled && (
           <div className={`text-right hidden sm:block ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'}`}>
             <div className={`text-xs uppercase tracking-wider ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`}>MAX STREAK</div>
@@ -796,7 +834,7 @@ export default function App() {
               className={`${themeBtnClass} flex items-center gap-1.5`}
               title={`Logout as ${user.email}`}
             >
-              <span className={`text-xs ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'} ${
+              <span className={`text-xs max-w-[120px] truncate ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'} ${
                 isTerminal ? 'text-terminal' : isVSCode ? 'text-[#d4d4d4]' : 'text-[#1a1a1a]'
               }`}>
                 {user.name || user.email}
@@ -884,6 +922,55 @@ export default function App() {
           >
             <Settings className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
           </button>
+          {/* Workspace (send target) dropdown — rightmost header button, custom themed popup */}
+          {user && (
+            <div className="relative" ref={workspaceMenuRef}>
+              <button
+                onClick={() => setShowWorkspaceMenu(!showWorkspaceMenu)}
+                className={`${themeBtnClass} flex items-center gap-0.5`}
+                title={`Send target: ${workspaces.find((w) => w.id === selectedWorkspaceId)?.name ?? 'Default workspace'}`}
+              >
+                <FolderKanban className={`w-4 h-4 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+                <ChevronDown className={`w-3 h-3 transition-transform ${showWorkspaceMenu ? 'rotate-180' : ''} ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#999999]'}`} />
+              </button>
+              {showWorkspaceMenu && (
+                <div className={workspaceMenuPanelClass}>
+                  <div className={workspaceMenuHeaderClass}>
+                    {isTerminal ? '[ SEND TARGET ]' : isVSCode ? 'send target' : 'Send Target'}
+                  </div>
+                  {workspacesLoading ? (
+                    <div className={`px-3 py-3 text-sm ${isTerminal ? 'font-terminal text-terminal-dim' : isVSCode ? 'font-mono text-[#858585]' : 'font-sans text-[#999999]'}`}>
+                      {isTerminal ? 'LOADING...' : 'Loading workspaces...'}
+                    </div>
+                  ) : workspaces.length === 0 ? (
+                    <div className={`px-3 py-3 text-sm ${isTerminal ? 'font-terminal text-terminal-dim' : isVSCode ? 'font-mono text-[#858585]' : 'font-sans text-[#999999]'}`}>
+                      {isTerminal ? '[ ACCOUNT DEFAULT ]' : 'No workspaces — messages go to your default'}
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        className={getWorkspaceItemClass(!selectedWorkspaceId)}
+                        onClick={() => { setSelectedWorkspaceId(null); setShowWorkspaceMenu(false); }}
+                      >
+                        <span className="truncate">{isTerminal ? '-- DEFAULT --' : 'Default workspace'}</span>
+                        {!selectedWorkspaceId && <Check className="w-3.5 h-3.5 shrink-0" />}
+                      </button>
+                      {workspaces.map((ws) => (
+                        <button
+                          key={ws.id}
+                          className={getWorkspaceItemClass(selectedWorkspaceId === ws.id)}
+                          onClick={() => { setSelectedWorkspaceId(ws.id); setShowWorkspaceMenu(false); }}
+                        >
+                          <span className="truncate">{ws.name}</span>
+                          {selectedWorkspaceId === ws.id && <Check className="w-3.5 h-3.5 shrink-0" />}
+                        </button>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </header>
 
@@ -1162,35 +1249,6 @@ export default function App() {
                  </a>
                </div>
             </div>
-
-            {user && (
-              <ControlGroup label="WORKSPACE" themeMode={themeMode}>
-                <select
-                  value={selectedWorkspaceId ?? ''}
-                  onChange={(e) => setSelectedWorkspaceId(e.target.value || null)}
-                  className={workspaceSelectClass}
-                  disabled={workspacesLoading || workspaces.length === 0}
-                >
-                  {workspaces.length === 0 ? (
-                    <option value="">{workspacesLoading ? 'Loading...' : 'No workspaces'}</option>
-                  ) : (
-                    <>
-                      <option value="">{isTerminal ? '-- DEFAULT --' : 'Default workspace'}</option>
-                      {workspaces.map((ws) => (
-                        <option key={ws.id} value={ws.id}>
-                          {ws.name}
-                        </option>
-                      ))}
-                    </>
-                  )}
-                </select>
-                <div className={`mt-2 text-xs ${isTerminal ? 'text-terminal-dim font-terminal' : isVSCode ? 'text-[#858585] font-mono' : 'text-[#999999] font-sans'}`}>
-                  {workspaces.length === 0
-                    ? (isTerminal ? '[ SEND TARGET: ACCOUNT DEFAULT ]' : 'Messages go to your default workspace')
-                    : (isTerminal ? `[ SEND TARGET: ${(workspaces.find((w) => w.id === selectedWorkspaceId)?.name ?? 'DEFAULT').toUpperCase()} ]` : `Send target: ${workspaces.find((w) => w.id === selectedWorkspaceId)?.name ?? 'Default workspace'}`)}
-                </div>
-              </ControlGroup>
-            )}
           </div>
         </div>
       </div>
