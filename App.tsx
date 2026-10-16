@@ -763,7 +763,7 @@ export default function App() {
   })();
 
   const getWorkspaceItemClass = (selected: boolean) => {
-    if (isTerminal) return `w-full flex items-center justify-between gap-2 px-3 py-2 text-sm font-terminal text-left cursor-pointer truncate ${selected ? 'bg-terminal text-black' : 'text-terminal hover:bg-terminal hover:text-black'}`;
+    if (isTerminal) return `w-full flex items-center justify-between gap-2 px-3 py-2 text-sm font-terminal text-left cursor-pointer truncate ${selected ? 'bg-terminal-green' : 'text-terminal hover:bg-terminal-green'}`;
     if (isVSCode) return `w-full flex items-center justify-between gap-2 px-3 py-2 text-sm font-mono text-left cursor-pointer truncate ${selected ? 'bg-[#094771] text-white' : 'text-[#cccccc] hover:bg-[#2a2d2e] hover:text-white'}`;
     return `w-full flex items-center justify-between gap-2 px-3 py-2 text-sm font-sans text-left cursor-pointer truncate ${selected ? 'bg-[#fff3c4] text-[#1a1a1a] font-medium' : 'text-[#1a1a1a] hover:bg-[#fffde7]'}`;
   };
