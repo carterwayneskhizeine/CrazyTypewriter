@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">CrazyTypewriter</string>
+    <string name="title_activity_main">CrazyTypewriter</string>
+    <string name="package_name">top.goldierill.crazytypewriter</string>
+    <string name="custom_url_scheme">top.goldierill.crazytypewriter</string>
+</resources>
