@@ -735,7 +735,10 @@ export default function App() {
     return baseClass;
   })();
 
-  const mainClass = `flex-1 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative z-20 ${shakeClass}`;
+  // min-h-0: without it a flex item refuses to shrink below its content, so long
+  // markdown in preview mode stretches <main> past the viewport and the preview
+  // never becomes scrollable on narrow (mobile) layouts
+  const mainClass = `flex-1 min-h-0 flex flex-col items-center justify-start p-2 sm:px-[15px] sm:py-[15px] relative z-20 ${shakeClass}`;
 
   const configSidebarClass = (() => {
     if (isTerminal) return `fixed inset-y-0 right-0 w-80 bg-terminal border-l-2 border-terminal shadow-lg transform transition-transform duration-300 z-50 ${showConfig ? 'translate-x-0' : 'translate-x-full'}`;
