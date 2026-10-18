@@ -77,7 +77,7 @@ interface User {
   - Shows `user.name` if available, otherwise `user.email`
 - **Send Button**: Only visible when `user` state exists
 - **Undo Button**: Only visible when `user` state exists, requires authentication
-- **Sync Status**: Cloud icon with status dots (only visible when logged in)
+- **Sync Status**: Status dots only, no cloud icon (only visible when logged in)
   - Green: Connected, Red: Disconnected, Yellow (pulsing): Pending changes
 - **Login Modal**: Email input (not username), theme-specific styling, backdrop blur, Enter key support
   - Terminal theme: `[ LOGIN ]` header, electronic blue borders
@@ -242,7 +242,7 @@ Visual feedback in header (visible when logged in):
 - **Green dot** - Connected to sync server
 - **Red dot** - Disconnected from server
 - **Yellow dot (pulsing)** - Pending changes waiting to sync
-- **Cloud icon (pulsing)** - Currently syncing
+- **Dots pulse** - Currently syncing
 - **Refresh Button** (RefreshCcw icon, logged in) - Force-reconnect a dead socket and pull latest content (`refreshSync` in `useSync`); connection also auto-revives on tab visibility change / network recovery (`visibilitychange` + `online` listeners; `reconnectionAttempts: Infinity`)
 
 ### Important Implementation Notes

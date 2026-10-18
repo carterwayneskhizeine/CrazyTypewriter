@@ -180,7 +180,7 @@ Visual feedback in header (visible when logged in):
 - **Green dot** - Connected to sync server
 - **Red dot** - Disconnected from server
 - **Yellow dot (pulsing)** - Pending changes waiting to sync
-- **Cloud icon (pulsing)** - Currently syncing
+- **Dots pulse** - Currently syncing
 - **Refresh Button** (RefreshCcw icon, logged in) - Force-reconnect a dead socket and pull latest content (`refreshSync` in `useSync`); connection also auto-revives on tab visibility change / network recovery (`visibilitychange` + `online` listeners; `reconnectionAttempts: Infinity`)
 
 ### Important Implementation Notes

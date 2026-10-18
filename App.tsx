@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun, Lock, Cloud, Undo, FolderKanban, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect, useLayoutEffect, useRef, useCallback, useMemo } from 'react';
+import { Settings, Zap, Flame, Crown, RefreshCcw, X, Eye, Edit, Copy, Check, Monitor, Terminal, Send, CheckCircle2, AlertCircle, Github, Sun, Lock, Undo, FolderKanban, ChevronDown } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
@@ -95,6 +95,9 @@ export default function App() {
   const [showConfig, setShowConfig] = useState(false);
   const [showWorkspaceMenu, setShowWorkspaceMenu] = useState(false);
   const workspaceMenuRef = useRef<HTMLDivElement>(null);
+  const workspacePanelRef = useRef<HTMLDivElement>(null);
+  const headerToolsRef = useRef<HTMLDivElement>(null);
+  const [workspaceMenuPos, setWorkspaceMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [shakeClass, setShakeClass] = useState('');
   const [caretY, setCaretY] = useState(0);
   const [hudSide, setHudSide] = useState<'left' | 'right'>('right');
@@ -132,9 +135,12 @@ export default function App() {
   useEffect(() => {
     if (!showWorkspaceMenu) return;
     const onMouseDown = (e: MouseEvent) => {
-      if (workspaceMenuRef.current && !workspaceMenuRef.current.contains(e.target as Node)) {
-        setShowWorkspaceMenu(false);
-      }
+      const target = e.target as Node;
+      // The panel lives outside the trigger's wrapper (fixed positioning), so both
+      // have to be treated as "inside the menu" to keep it open while using it
+      if (workspaceMenuRef.current?.contains(target)) return;
+      if (workspacePanelRef.current?.contains(target)) return;
+      setShowWorkspaceMenu(false);
     };
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setShowWorkspaceMenu(false);
@@ -146,6 +152,42 @@ export default function App() {
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [showWorkspaceMenu]);
+
+  // Anchor the fixed dropdown under its trigger button, right edges aligned
+  const positionWorkspaceMenu = useCallback(() => {
+    const btn = workspaceMenuRef.current;
+    if (!btn) return;
+    const rect = btn.getBoundingClientRect();
+    const width = 240; // matches the panel's w-60
+    const left = Math.max(8, Math.min(rect.right - width, window.innerWidth - width - 8));
+    setWorkspaceMenuPos({ top: rect.bottom + 8, left });
+  }, []);
+
+  useEffect(() => {
+    if (!showWorkspaceMenu) return;
+    positionWorkspaceMenu();
+    window.addEventListener('resize', positionWorkspaceMenu);
+    return () => window.removeEventListener('resize', positionWorkspaceMenu);
+  }, [showWorkspaceMenu, positionWorkspaceMenu]);
+
+  // Toolbar right-edge pinning: while the buttons fit, CSS keeps them right-aligned.
+  // Once they overflow, park the scroll at the end so the toolbar looks the same as on
+  // desktop and the user swipes backwards for the sync/login buttons. A ResizeObserver
+  // on the button row re-pins whenever buttons appear/disappear or change size.
+  useLayoutEffect(() => {
+    const row = headerToolsRef.current;
+    const scroller = row?.parentElement;
+    if (!row || !scroller) return;
+    const pinRight = () => { scroller.scrollLeft = scroller.scrollWidth; };
+    pinRight();
+    const observer = new ResizeObserver(pinRight);
+    observer.observe(row);
+    window.addEventListener('resize', pinRight);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', pinRight);
+    };
+  }, []);
 
   useEffect(() => {
     if (!user) setShowWorkspaceMenu(false);
@@ -752,11 +794,14 @@ export default function App() {
     return 'w-full modern-range';
   })();
 
-  // Themed workspace dropdown (custom popup — native <select> options can't be themed)
+  // Themed workspace dropdown (custom popup — native <select> options can't be themed).
+  // Fixed-position: the toolbar is a horizontal scroll container, so an absolutely
+  // positioned panel living inside it would be clipped. Position comes from the
+  // trigger button's viewport rect (see workspaceMenuPos).
   const workspaceMenuPanelClass = (() => {
-    if (isTerminal) return 'absolute right-0 top-full mt-2 w-60 max-h-72 overflow-y-auto terminal-scrollbar bg-terminal-black border-2 border-terminal shadow-lg z-50';
-    if (isVSCode) return 'absolute right-0 top-full mt-2 w-60 max-h-72 overflow-y-auto vscode-scrollbar bg-[#252526] border border-[#3c3c3c] rounded-md shadow-2xl z-50';
-    return 'absolute right-0 top-full mt-2 w-60 max-h-72 overflow-y-auto modern-scrollbar bg-white border border-[#ffd700] rounded-lg shadow-xl z-50';
+    if (isTerminal) return 'fixed z-50 w-60 max-h-72 overflow-y-auto terminal-scrollbar bg-terminal-black border-2 border-terminal shadow-lg';
+    if (isVSCode) return 'fixed z-50 w-60 max-h-72 overflow-y-auto vscode-scrollbar bg-[#252526] border border-[#3c3c3c] rounded-md shadow-2xl';
+    return 'fixed z-50 w-60 max-h-72 overflow-y-auto modern-scrollbar bg-white border border-[#ffd700] rounded-lg shadow-xl';
   })();
 
   const workspaceMenuHeaderClass = (() => {
@@ -804,177 +849,184 @@ export default function App() {
           </div>
         </div>
 
-        {/* Buttons - Show on both mobile and desktop (wrap on narrow screens so nothing falls off-screen) */}
-        <div className="flex flex-wrap items-center justify-end gap-2">
-          {config.effectsEnabled && (
-          <div className={`text-right hidden sm:block ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'}`}>
-            <div className={`text-xs uppercase tracking-wider ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`}>MAX STREAK</div>
-            <div className={`text-base ${isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700] font-bold'}`}>{maxCombo}</div>
-          </div>
-          )}
-          {/* Sync Status Indicator - Only show when logged in */}
-          {user && syncStatus && (
-            <div className="flex items-center gap-1.5" title={`Last synced: ${syncStatus.lastSyncedAt ? new Date(syncStatus.lastSyncedAt).toLocaleTimeString() : 'Never'}`}>
-              <div className={`w-2 h-2 rounded-full ${syncStatus.connected ? (isTerminal ? 'bg-gradient-to-r from-[#00bfff] to-[#7fdbff]' : 'bg-green-500') : 'bg-red-500'} ${syncStatus.syncing ? 'animate-pulse' : ''}`} />
-              {syncStatus.pendingChanges && <div className="w-2 h-2 rounded-full bg-yellow-500 animate-ping" />}
-              <Cloud className={`w-3.5 h-3.5 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#858585]' : 'text-[#999999]'} ${syncStatus.syncing ? 'animate-pulse' : ''}`} />
+        {/* Buttons - Show on both mobile and desktop. Always one line; on narrow screens the
+            row scrolls sideways (swipe) to reach the buttons that overflow. */}
+        <div className="header-tools flex flex-1 min-w-0">
+          <div ref={headerToolsRef} className="header-tools-row flex items-center gap-2">
+            {config.effectsEnabled && (
+            <div className={`text-right hidden sm:block ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'}`}>
+              <div className={`text-xs uppercase tracking-wider ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`}>MAX STREAK</div>
+              <div className={`text-base ${isTerminal ? 'text-terminal crt-glow' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700] font-bold'}`}>{maxCombo}</div>
             </div>
-          )}
-          {/* Manual Sync Refresh - reconnect dead socket & pull latest, only when logged in */}
-          {user && (
-            <button
-              onClick={refreshSync}
-              className={themeBtnClass}
-              title={syncStatus.connected ? 'Refresh: pull latest from server' : 'Refresh: reconnect sync'}
-            >
-              <RefreshCcw className={`w-4 h-4 ${syncStatus.syncing ? 'animate-spin' : ''} ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
-            </button>
-          )}
-          {/* Login/Logout Button */}
-          {user ? (
-            <button
-              onClick={handleLogout}
-              className={`${themeBtnClass} flex items-center gap-1.5`}
-              title={`Logout as ${user.email}`}
-            >
-              <span className={`text-xs max-w-[120px] truncate ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'} ${
-                isTerminal ? 'text-terminal' : isVSCode ? 'text-[#d4d4d4]' : 'text-[#1a1a1a]'
-              }`}>
-                {user.name || user.email}
-              </span>
-              <X className={`w-3 h-3 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`} />
-            </button>
-          ) : (
-            <button
-              onClick={() => setShowLoginModal(true)}
-              className={themeBtnClass}
-              title="Login"
-            >
-              <Lock className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
-            </button>
-          )}
-          {/* Send Button - Only show when logged in */}
-          {user && (
-          <>
-          <button
-            onClick={handleUndo}
-            className={themeBtnClass}
-            title={undoStatus === 'success' ? 'Undone!' : undoStatus === 'error' ? 'No history!' : undoStatus === 'undoing' ? 'Undoing...' : 'Undo'}
-            disabled={undoStatus === 'undoing'}
-          >
-            {undoStatus === 'success' ? (
-              <Check className={`w-4 h-4 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700]'}`} />
-            ) : undoStatus === 'error' ? (
-              <AlertCircle className="w-4 h-4 text-red-500" />
-            ) : undoStatus === 'undoing' ? (
-              <Undo className={`w-4 h-4 animate-pulse ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
-            ) : (
-              <Undo className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
             )}
-          </button>
-          <button
-            key={sendUpdateKey}
-            onClick={handleSend}
-            className={themeBtnClass}
-            title={sendStatus === 'success' ? 'Sent!' : sendStatus === 'error' ? 'Failed!' : sendStatus === 'sending' ? 'Sending...' : 'Send'}
-            disabled={sendStatus === 'sending'}
-          >
-            {sendStatus === 'success' ? (
-              <CheckCircle2 className={`w-4 h-4 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700]'}`} />
-            ) : sendStatus === 'error' ? (
-              <AlertCircle className="w-4 h-4 text-red-500" />
-            ) : sendStatus === 'sending' ? (
-              <Send className={`w-4 h-4 animate-pulse ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
-            ) : (
-              <Send className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+            {/* Sync Status Indicator - Only show when logged in (dots only, no cloud icon) */}
+            {user && syncStatus && (
+              <div className="flex items-center gap-1.5" title={`Last synced: ${syncStatus.lastSyncedAt ? new Date(syncStatus.lastSyncedAt).toLocaleTimeString() : 'Never'}`}>
+                <div className={`w-2 h-2 rounded-full ${syncStatus.connected ? (isTerminal ? 'bg-gradient-to-r from-[#00bfff] to-[#7fdbff]' : 'bg-green-500') : 'bg-red-500'} ${syncStatus.syncing ? 'animate-pulse' : ''}`} />
+                {syncStatus.pendingChanges && <div className="w-2 h-2 rounded-full bg-yellow-500 animate-ping" />}
+              </div>
             )}
-          </button>
-          </>
-          )}
-          <button
-            onClick={handleCopy}
-            className={themeBtnClass}
-            title={copied ? 'Copied!' : 'Copy'}
-          >
-            {copied ? <Check className={`w-4 h-4 ${isTerminal ? 'text-[#7fdbff]' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700]'}`} /> : <Copy className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />}
-          </button>
-          <button
-            onClick={() => setViewMode(viewMode === 'edit' ? 'preview' : 'edit')}
-            className={themeBtnClass}
-            title={viewMode === 'edit' ? 'Preview' : 'Edit'}
-          >
-            {viewMode === 'edit'
-              ? <Eye className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
-              : <Edit className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
-            }
-          </button>
-          <button
-            onClick={() => {
-              if (themeMode === 'terminal') setThemeMode('vscode');
-              else if (themeMode === 'vscode') setThemeMode('modern');
-              else setThemeMode('terminal');
-            }}
-            className={themeBtnClass}
-            title={`Switch to ${themeMode === 'terminal' ? 'VS Code Theme' : themeMode === 'vscode' ? 'Modern Theme' : 'Terminal Theme'}`}
-          >
-            {themeMode === 'terminal' ? <Monitor className="w-4 h-4" /> : themeMode === 'vscode' ? <Sun className="w-4 h-4" /> : <Terminal className="w-4 h-4" />}
-          </button>
-          <button
-            onClick={() => setShowConfig(!showConfig)}
-            className={themeBtnClass}
-          >
-            <Settings className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
-          </button>
-          {/* Workspace (send target) dropdown — rightmost header button, custom themed popup */}
-          {user && (
-            <div className="relative" ref={workspaceMenuRef}>
+            {/* Manual Sync Refresh - reconnect dead socket & pull latest, only when logged in */}
+            {user && (
               <button
-                onClick={() => setShowWorkspaceMenu(!showWorkspaceMenu)}
-                className={`${themeBtnClass} flex items-center gap-0.5`}
-                title={`Send target: ${workspaces.find((w) => w.id === selectedWorkspaceId)?.name ?? 'Default workspace'}`}
+                onClick={refreshSync}
+                className={themeBtnClass}
+                title={syncStatus.connected ? 'Refresh: pull latest from server' : 'Refresh: reconnect sync'}
               >
-                <FolderKanban className={`w-4 h-4 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
-                <ChevronDown className={`w-3 h-3 transition-transform ${showWorkspaceMenu ? 'rotate-180' : ''} ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#999999]'}`} />
+                <RefreshCcw className={`w-4 h-4 ${syncStatus.syncing ? 'animate-spin' : ''} ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
               </button>
-              {showWorkspaceMenu && (
-                <div className={workspaceMenuPanelClass}>
-                  <div className={workspaceMenuHeaderClass}>
-                    {isTerminal ? '[ SEND TARGET ]' : isVSCode ? 'send target' : 'Send Target'}
-                  </div>
-                  {workspacesLoading ? (
-                    <div className={`px-3 py-3 text-sm ${isTerminal ? 'font-terminal text-terminal-dim' : isVSCode ? 'font-mono text-[#858585]' : 'font-sans text-[#999999]'}`}>
-                      {isTerminal ? 'LOADING...' : 'Loading workspaces...'}
-                    </div>
-                  ) : workspaces.length === 0 ? (
-                    <div className={`px-3 py-3 text-sm ${isTerminal ? 'font-terminal text-terminal-dim' : isVSCode ? 'font-mono text-[#858585]' : 'font-sans text-[#999999]'}`}>
-                      {isTerminal ? '[ ACCOUNT DEFAULT ]' : 'No workspaces — messages go to your default'}
-                    </div>
-                  ) : (
-                    <>
-                      <button
-                        className={getWorkspaceItemClass(!selectedWorkspaceId)}
-                        onClick={() => { setSelectedWorkspaceId(null); setShowWorkspaceMenu(false); }}
-                      >
-                        <span className="truncate">{isTerminal ? '-- DEFAULT --' : 'Default workspace'}</span>
-                        {!selectedWorkspaceId && <Check className="w-3.5 h-3.5 shrink-0" />}
-                      </button>
-                      {workspaces.map((ws) => (
-                        <button
-                          key={ws.id}
-                          className={getWorkspaceItemClass(selectedWorkspaceId === ws.id)}
-                          onClick={() => { setSelectedWorkspaceId(ws.id); setShowWorkspaceMenu(false); }}
-                        >
-                          <span className="truncate">{ws.name}</span>
-                          {selectedWorkspaceId === ws.id && <Check className="w-3.5 h-3.5 shrink-0" />}
-                        </button>
-                      ))}
-                    </>
-                  )}
-                </div>
+            )}
+            {/* Login/Logout Button */}
+            {user ? (
+              <button
+                onClick={handleLogout}
+                className={`${themeBtnClass} flex items-center gap-1.5`}
+                title={`Logout as ${user.email}`}
+              >
+                <span className={`text-xs max-w-[120px] truncate ${isTerminal ? 'font-terminal' : isVSCode ? 'font-mono' : 'font-sans'} ${
+                  isTerminal ? 'text-terminal' : isVSCode ? 'text-[#d4d4d4]' : 'text-[#1a1a1a]'
+                }`}>
+                  {user.name || user.email}
+                </span>
+                <X className={`w-3 h-3 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#858585]' : 'text-[#666666]'}`} />
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowLoginModal(true)}
+                className={themeBtnClass}
+                title="Login"
+              >
+                <Lock className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+              </button>
+            )}
+            {/* Send Button - Only show when logged in */}
+            {user && (
+            <>
+            <button
+              onClick={handleUndo}
+              className={themeBtnClass}
+              title={undoStatus === 'success' ? 'Undone!' : undoStatus === 'error' ? 'No history!' : undoStatus === 'undoing' ? 'Undoing...' : 'Undo'}
+              disabled={undoStatus === 'undoing'}
+            >
+              {undoStatus === 'success' ? (
+                <Check className={`w-4 h-4 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700]'}`} />
+              ) : undoStatus === 'error' ? (
+                <AlertCircle className="w-4 h-4 text-red-500" />
+              ) : undoStatus === 'undoing' ? (
+                <Undo className={`w-4 h-4 animate-pulse ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+              ) : (
+                <Undo className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
               )}
-            </div>
-          )}
+            </button>
+            <button
+              key={sendUpdateKey}
+              onClick={handleSend}
+              className={themeBtnClass}
+              title={sendStatus === 'success' ? 'Sent!' : sendStatus === 'error' ? 'Failed!' : sendStatus === 'sending' ? 'Sending...' : 'Send'}
+              disabled={sendStatus === 'sending'}
+            >
+              {sendStatus === 'success' ? (
+                <CheckCircle2 className={`w-4 h-4 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700]'}`} />
+              ) : sendStatus === 'error' ? (
+                <AlertCircle className="w-4 h-4 text-red-500" />
+              ) : sendStatus === 'sending' ? (
+                <Send className={`w-4 h-4 animate-pulse ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+              ) : (
+                <Send className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+              )}
+            </button>
+            </>
+            )}
+            <button
+              onClick={handleCopy}
+              className={themeBtnClass}
+              title={copied ? 'Copied!' : 'Copy'}
+            >
+              {copied ? <Check className={`w-4 h-4 ${isTerminal ? 'text-[#7fdbff]' : isVSCode ? 'text-[#007acc]' : 'text-[#ffd700]'}`} /> : <Copy className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />}
+            </button>
+            <button
+              onClick={() => setViewMode(viewMode === 'edit' ? 'preview' : 'edit')}
+              className={themeBtnClass}
+              title={viewMode === 'edit' ? 'Preview' : 'Edit'}
+            >
+              {viewMode === 'edit'
+                ? <Eye className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+                : <Edit className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+              }
+            </button>
+            <button
+              onClick={() => {
+                if (themeMode === 'terminal') setThemeMode('vscode');
+                else if (themeMode === 'vscode') setThemeMode('modern');
+                else setThemeMode('terminal');
+              }}
+              className={themeBtnClass}
+              title={`Switch to ${themeMode === 'terminal' ? 'VS Code Theme' : themeMode === 'vscode' ? 'Modern Theme' : 'Terminal Theme'}`}
+            >
+              {themeMode === 'terminal' ? <Monitor className="w-4 h-4" /> : themeMode === 'vscode' ? <Sun className="w-4 h-4" /> : <Terminal className="w-4 h-4" />}
+            </button>
+            <button
+              onClick={() => setShowConfig(!showConfig)}
+              className={themeBtnClass}
+            >
+              <Settings className={`w-4 h-4 ${isTerminal ? '' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+            </button>
+            {/* Workspace (send target) dropdown — rightmost header button, custom themed popup */}
+            {user && (
+              <div ref={workspaceMenuRef}>
+                <button
+                  onClick={() => { positionWorkspaceMenu(); setShowWorkspaceMenu(!showWorkspaceMenu); }}
+                  className={`${themeBtnClass} flex items-center gap-0.5`}
+                  title={`Send target: ${workspaces.find((w) => w.id === selectedWorkspaceId)?.name ?? 'Default workspace'}`}
+                >
+                  <FolderKanban className={`w-4 h-4 ${isTerminal ? 'text-terminal' : isVSCode ? 'text-[#858585]' : 'text-[#cccccc]'}`} />
+                  <ChevronDown className={`w-3 h-3 transition-transform ${showWorkspaceMenu ? 'rotate-180' : ''} ${isTerminal ? 'text-terminal-dim' : isVSCode ? 'text-[#858585]' : 'text-[#999999]'}`} />
+                </button>
+              </div>
+            )}
+          </div>
         </div>
+        {/* Panel is fixed-positioned so the swipeable toolbar above can't clip it */}
+        {user && showWorkspaceMenu && workspaceMenuPos && (
+          <div
+            ref={workspacePanelRef}
+            className={workspaceMenuPanelClass}
+            style={{ top: workspaceMenuPos.top, left: workspaceMenuPos.left }}
+          >
+            <div className={workspaceMenuHeaderClass}>
+              {isTerminal ? '[ SEND TARGET ]' : isVSCode ? 'send target' : 'Send Target'}
+            </div>
+            {workspacesLoading ? (
+              <div className={`px-3 py-3 text-sm ${isTerminal ? 'font-terminal text-terminal-dim' : isVSCode ? 'font-mono text-[#858585]' : 'font-sans text-[#999999]'}`}>
+                {isTerminal ? 'LOADING...' : 'Loading workspaces...'}
+              </div>
+            ) : workspaces.length === 0 ? (
+              <div className={`px-3 py-3 text-sm ${isTerminal ? 'font-terminal text-terminal-dim' : isVSCode ? 'font-mono text-[#858585]' : 'font-sans text-[#999999]'}`}>
+                {isTerminal ? '[ ACCOUNT DEFAULT ]' : 'No workspaces — messages go to your default'}
+              </div>
+            ) : (
+              <>
+                <button
+                  className={getWorkspaceItemClass(!selectedWorkspaceId)}
+                  onClick={() => { setSelectedWorkspaceId(null); setShowWorkspaceMenu(false); }}
+                >
+                  <span className="truncate">{isTerminal ? '-- DEFAULT --' : 'Default workspace'}</span>
+                  {!selectedWorkspaceId && <Check className="w-3.5 h-3.5 shrink-0" />}
+                </button>
+                {workspaces.map((ws) => (
+                  <button
+                    key={ws.id}
+                    className={getWorkspaceItemClass(selectedWorkspaceId === ws.id)}
+                    onClick={() => { setSelectedWorkspaceId(ws.id); setShowWorkspaceMenu(false); }}
+                  >
+                    <span className="truncate">{ws.name}</span>
+                    {selectedWorkspaceId === ws.id && <Check className="w-3.5 h-3.5 shrink-0" />}
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
+        )}
       </header>
 
       {/* Main Content Area */}

@@ -1353,6 +1353,35 @@
         font-size: 0.9rem;
         border: 1px solid #fecaca;
       }
+
+      /* Header toolbar: never wraps. On narrow screens the buttons overflow and are reached
+         by swiping the row sideways (scrollbar hidden, inertia scrolling on).
+         .header-tools scrolls, .header-tools-row is the measured button row. */
+      .header-tools {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+        overflow-y: hidden;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+
+      .header-tools::-webkit-scrollbar {
+        display: none;
+      }
+
+      /* Right-align the buttons while they fit, using an auto margin rather than
+         justify-content:flex-end — with flex-end the buttons that don't fit end up
+         outside the scroll range and can't be swiped to. The margin collapses to 0
+         the moment the row overflows, which puts the overflow back within reach. */
+      .header-tools-row {
+        flex-shrink: 0;
+        margin-left: auto;
+      }
+
+      /* Buttons keep their size inside the scroll row instead of being squashed */
+      .header-tools-row > * {
+        flex-shrink: 0;
+      }
     </style>
   </head>
   <body>
