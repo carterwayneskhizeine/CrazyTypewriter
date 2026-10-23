@@ -6,7 +6,7 @@ const config: CapacitorConfig = {
   webDir: 'mobile-www',
   server: {
     // APK 打开后直接加载线上站点（同源 API/登录/同步全部照旧）
-    url: 'https://type-node.goldie-rill.top',
+    url: 'https://typer.goldierill.com/',
     cleartext: false,
   },
   plugins: {

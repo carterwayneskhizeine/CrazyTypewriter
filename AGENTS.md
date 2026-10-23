@@ -207,7 +207,7 @@ Visual feedback in header (visible when logged in):
 
 ## Android APK（安卓打包）
 
-APK 是线上站点的全屏 WebView 壳（Capacitor remote-URL mode），启动即加载 `https://type-node.goldie-rill.top`。网页版 / Docker / nginx 零改动——所有 API 都是同源相对路径，NextAuth Cookie 与 socket.io 在 WebView 里照常工作。
+APK 是线上站点的全屏 WebView 壳（Capacitor remote-URL mode），启动即加载 `https://typer.goldierill.com/`。网页版 / Docker / nginx 零改动——所有 API 都是同源相对路径，NextAuth Cookie 与 socket.io 在 WebView 里照常工作。
 
 **新增文件：**
 - `capacitor.config.ts` — appId `top.goldierill.crazytypewriter`、`server.url` 指向线上站点、SystemBars 深色
